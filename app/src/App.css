@@ -38,5 +38,27 @@
 }
 
 .card {
-  max-width: 8%;
+  max-width: 6%;
+  margin: 2px;
 }
+
+.card:hover {
+  max-width: 6.5%;
+  margin: 2px;
+}
+
+.card-selected {
+  max-width: 7.5%;
+  margin: 10px;
+  background-color: #61dafb;
+}
+
+.flex-hand {
+  display: flex;
+}
+
+.flex-display {
+  display: flex;
+  flex-direction: column;
+}
+
