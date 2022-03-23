@@ -35,31 +35,13 @@ export const Card: FC<CardProps> = (props) => {
 
 interface HandProps {
   cardLst: number[]
+  selLst: boolean[]
+  playerNum: number
+  handleClickCard: (index:number) => void
+  handleClickSubmit: () => number  
 }
 
-type cardSelected = boolean
-
 export const Hand:FC<HandProps> = (props) => {
-  const [hand, setHand] = useState<cardSelected[]>(
-    Array(props.cardLst.length).fill(false)
-  )
-
-  const updateSelected = (cardNum: number) => {
-    setHand((prev) => {
-      for (var i in prev){
-        prev[i] = false
-      }
-      prev[cardNum] = true
-      return [...prev]
-    })
-  }
-  
-  const handleClick = (index:number) => {
-    console.log("Card " + index + " was clicked!!")
-    updateSelected(index)
-    console.log(hand)
-  }
-
   const getSuit = (card:number) => {
     return Math.floor(card/13)
   }
@@ -70,40 +52,52 @@ export const Hand:FC<HandProps> = (props) => {
 
   return (
     <div className='flex'>
-      {hand.map((val, i) => 
+      {props.selLst.map((val, i) => 
         <Card 
           suit={getSuit(props.cardLst[i])} 
           num={getNumber(props.cardLst[i])} 
           hidden={false} 
           selected={val} 
-          handleClick={() => handleClick(i)}
+          handleClick={() => props.handleClickCard(i)}
           key={i}
           total={props.cardLst.length}
         />
       )}
+      <button type="button" onClick={props.handleClickSubmit}>
+        Confirm!
+      </button>
     </div>
   );
 }
 
-function App() {
-  const shuffle = (array:number[]) => {
-    let currentIndex = array.length,  randomIndex;
-  
-    // While there remain elements to shuffle...
-    while (currentIndex != 0) {
-  
-      // Pick a remaining element...
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex--;
-  
-      // And swap it with the current element.
-      [array[currentIndex], array[randomIndex]] = [
-        array[randomIndex], array[currentIndex]];
-    }
-  
-    return array;
+
+/*** Some functions and global variables that I need to set such that it isnt initalized 
+ * like every fucking time a click happens ***/
+/**************************************************************************************************/
+type cardSelected = boolean
+
+var playerNum = 1 //TODO should be const: change when establishing multiplayer
+
+const shuffle = (array:number[]) => {
+  let currentIndex = array.length,  randomIndex;
+
+  // While there remain elements to shuffle...
+  while (currentIndex != 0) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
   }
 
+  return array;
+}
+
+const genCards = () => {
+  console.log("generating cards!")
   var allCards = Array.from(Array(52).keys())
   allCards = shuffle(allCards)
   var cardList1 = allCards.slice(0,13)
@@ -115,27 +109,80 @@ function App() {
   cardList3 = cardList3.sort((a, b) => a - b)
   cardList4 = cardList4.sort((a, b) => a - b)
 
-  console.log(cardList1)
+  /*console.log(cardList1)
   console.log(cardList2)
   console.log(cardList3)
-  console.log(cardList4)
+  console.log(cardList4)*/
 
-  /**\
- * <Hand 
-        cardLst={cardList2}
-      />
-      <Hand 
-        cardLst={cardList3}
-      />
-      <Hand 
-        cardLst={cardList4}
-      />
- */
+  return [cardList1, cardList2, cardList3, cardList4]
+}
+
+const cardInitList = genCards()[playerNum]
+var cardList = [...cardInitList]
+/**************************************************************************************************/
+
+function App() {
+  const [selLst, setSelLst] = useState<cardSelected[]>(
+    Array(cardList.length).fill(false)
+  )
+
+  const updateSelected = (cardNum: number) => {
+    setSelLst((prev) => {
+      for (var i in prev){
+        prev[i] = false
+      }
+      prev[cardNum] = true
+      return [...prev]
+    })
+  }
+  
+  const handleClickCard = (index:number) => {
+    console.log("Card " + index + " was clicked!!")
+    updateSelected(index)
+    console.log(selLst)
+    console.log(cardInitList)
+  }
+
+  // This function removes the selected card, if any, and outputs the card num of the removed card. 
+  // TODO this function will have to be changed to check for the legality of the card removed. 
+  // TODO this function will have to be changed to communicate with the server
+  const handleClickSubmit = () => {
+    var selected = -1
+    for (var i = 0; i < selLst.length; ++i){
+      if (selLst[i]) selected = i
+    }
+
+    if (selected === -1){
+      // eslint-disable-next-line no-restricted-globals
+      const hahaWhatsThisIJustWannaSuppressTheWarningLmfao = confirm("Please Select a Card!")
+      return -1
+    }
+    else {
+      const cardRemoved = cardList[selected]
+      
+      var cardLstNew = []
+      for (var i = 0; i < cardList.length; ++i){
+        if (i!=selected){
+          cardLstNew.push(cardList[i])
+        }
+      }
+      cardList = cardLstNew
+      
+      console.log(cardList)
+      return cardRemoved
+    }
+  }
+
+
 
   return (
     <div className='flex-display'>
       <Hand 
-        cardLst={cardList1}
+        cardLst={cardList}
+        selLst={selLst}
+        playerNum={playerNum}
+        handleClickCard={handleClickCard}
+        handleClickSubmit={handleClickSubmit}
       />
     </div>
   )
