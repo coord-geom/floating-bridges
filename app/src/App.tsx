@@ -43,7 +43,7 @@ interface HandProps {
 
 export const Hand:FC<HandProps> = (props) => {
   const getSuit = (card:number) => {
-    console.log(props.cardLst + " " + card)
+    console.log(props.cardLst)
     return Math.floor(card/13)
   }
 
@@ -127,6 +127,10 @@ function App() {
     Array(cardList.length).fill(false)
   )
 
+  const [numCards, setNumCards] = useState<number>(
+    13
+  )
+
   const updateSelected = (cardNum: number) => {
     // If neg, we treat it as remove 1 
     if (cardNum < 0){
@@ -174,14 +178,18 @@ function App() {
     else {
       const cardRemoved = cardList[selected]
 
-      updateSelected(-1)
-
       setCardList((prev) => {
-        prev.splice(selected, 1)
-        return [...prev]
+        if (prev.length === numCards){
+          prev.splice(selected, 1)
+          console.log(prev)
+          setNumCards((prev) =>{ return prev-1})
+          updateSelected(-1)
+          return JSON.parse(JSON.stringify(prev)) //[...prev]
+        }
+        return prev        
       })
       
-      console.log(cardList)
+      console.log("End of handleClickSubmit [" + cardList + "] (length " +  cardList.length + ")")
       return cardRemoved
     }
   }
