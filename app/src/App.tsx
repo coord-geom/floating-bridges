@@ -14,7 +14,6 @@ interface CardProps {
   selected:boolean,
   handleClick: () => void,
   key: number, //position number
-  total: number
 }
 
 export const Card: FC<CardProps> = (props) => {
@@ -26,9 +25,11 @@ export const Card: FC<CardProps> = (props) => {
                     , [require("./sprites/2_of_hearts.png"), require("./sprites/3_of_hearts.png"), require("./sprites/4_of_hearts.png"), require("./sprites/5_of_hearts.png"), require("./sprites/6_of_hearts.png"), require("./sprites/7_of_hearts.png"), require("./sprites/8_of_hearts.png"), require("./sprites/9_of_hearts.png"), require("./sprites/10_of_hearts.png"), require("./sprites/jack_of_hearts2.png"), require("./sprites/queen_of_hearts2.png"), require("./sprites/king_of_hearts2.png"), require("./sprites/ace_of_hearts.png")]
                     , [require("./sprites/2_of_spades.png"), require("./sprites/3_of_spades.png"), require("./sprites/4_of_spades.png"), require("./sprites/5_of_spades.png"), require("./sprites/6_of_spades.png"), require("./sprites/7_of_spades.png"), require("./sprites/8_of_spades.png"), require("./sprites/9_of_spades.png"), require("./sprites/10_of_spades.png"), require("./sprites/jack_of_spades2.png"), require("./sprites/queen_of_spades2.png"), require("./sprites/king_of_spades2.png"), require("./sprites/ace_of_spades2.png")]]
 
+  const hiddenCard = require("./sprites/back.png")
+
   return (
-    <img src={cardImages[props.suit][props.num]} alt={cardName} 
-    className={props.selected ? "card-selected" : "card"} onClick={props.handleClick}/>
+    <img src={props.hidden ? hiddenCard : cardImages[props.suit][props.num]} alt={cardName} 
+    className={props.hidden ? "card-hidden" : props.selected ? "card-selected" : "card"} onClick={props.handleClick}/>
   );
   
 }
@@ -52,7 +53,7 @@ export const Hand:FC<HandProps> = (props) => {
   }
 
   return (
-    <div className='flex'>
+    <div className='flex-display'>
       {props.cardLst.map((val, i) => 
         <Card 
           suit={getSuit(val)} 
@@ -61,7 +62,6 @@ export const Hand:FC<HandProps> = (props) => {
           selected={props.selLst[i]} 
           handleClick={() => props.handleClickCard(i)}
           key={i}
-          total={props.cardLst.length}
         />
       )}
       <button type="button" onClick={props.handleClickSubmit}>
@@ -71,11 +71,38 @@ export const Hand:FC<HandProps> = (props) => {
   );
 }
 
+interface OthHandProps {
+  numCards: number
+  side: number //1 for left, 2 for top, 3 for right
+}
+
+export const OthHand:FC<OthHandProps> = (props) => {
+  return (
+    <div className={
+      (props.side === 1) ? "flex-other-hand-1" : (props.side === 2) ? "flex-other-hand-2" : "flex-other-hand-3"
+    }>
+      {Array(props.numCards).fill(69420).map((val, i) => 
+        <Card 
+          suit={0} 
+          num={0} 
+          hidden={true} 
+          selected={false} 
+          handleClick={() => {}}
+          key={i + props.side*13}
+        />
+      )}
+    </div>
+  );
+}
+
 
 type cardSelected = boolean
 
+/* I know that this is very bad coding practice, but bear with me here. All the functions that have to do with 
+ * the gameplay of the app will be situated here. To toggle between sections, just search the word `PAGEBREAK`*/
 function App() {
-  var playerNum = 1 //TODO should be const: change when establishing multiplayer
+  /** PAGEBREAK Functions that have to do with initializing the players cards **/
+  var playerNum = 1 //TODO should be const: init when establishing multiplayer
 
   const shuffle = (array:number[]) => {
     let currentIndex = array.length,  randomIndex;
@@ -116,8 +143,7 @@ function App() {
     return [cardList1, cardList2, cardList3, cardList4]
   }
 
-  //const cardInitList = genCards()[playerNum]
-
+  /** States and Functions which have to do with the user's hand **/
   const [cardList, setCardList] = useState<number[]>(
     genCards()[playerNum] 
     //[...cardInitList]
@@ -127,9 +153,7 @@ function App() {
     Array(cardList.length).fill(false)
   )
 
-  const [numCards, setNumCards] = useState<number>(
-    13
-  )
+  const [numCards, setNumCards] = useState<number>(13)
 
   const updateSelected = (cardNum: number) => {
     // If neg, we treat it as remove 1 
@@ -184,7 +208,7 @@ function App() {
           console.log(prev)
           setNumCards((prev) =>{ return prev-1})
           updateSelected(-1)
-          return JSON.parse(JSON.stringify(prev)) //[...prev]
+          return [...prev]
         }
         return prev        
       })
@@ -194,10 +218,15 @@ function App() {
     }
   }
 
+  /** The other players info. Again, this will need to be updated when you start building the server. **/
+  
 
 
+
+
+  /** PAGEBREAK return statement **/
   return (
-    <div className='flex-display'>
+    <div>
       <Hand 
         cardLst={cardList}
         selLst={selLst}
@@ -205,6 +234,9 @@ function App() {
         handleClickCard={handleClickCard}
         handleClickSubmit={handleClickSubmit}
       />
+      <OthHand side={2} numCards={13} />
+      <OthHand side={1} numCards={13} />
+      <OthHand side={3} numCards={13} />
     </div>
   )
 }
