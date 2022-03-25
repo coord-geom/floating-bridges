@@ -59,7 +59,7 @@
 }
 
 .card-hidden-rot {
-  max-width: 7%;
+  max-height: 7%;
   margin: 2px;
   overflow: hidden;
 }
@@ -72,7 +72,7 @@
   display: flex;
   box-sizing: border-box;
   width: 100%;
-  margin-top: 40%;
+  margin-top: 85vh;
   justify-content: center;
   align-items: center;
   position: absolute;
@@ -90,7 +90,7 @@
   justify-content: center;
   max-height: 98vh; /*https://stackoverflow.com/questions/11516291/css-get-height-of-screen-resolution*/
   height:98vh;
-  margin-left: 0%;
+  margin-left: 2vw;
   position: absolute;
 }
 
@@ -108,11 +108,13 @@
   flex-direction: column;
   align-content: center;
   justify-content: center;
-  margin-left: 90%;
-  max-height: 98vh; /*https://stackoverflow.com/questions/11516291/css-get-height-of-screen-resolution*/
+  margin-right: 2vw;
+  margin-left: 92vw;
+  max-height: 98vh;
   height:98vh;
   position: absolute;
   border: 1px solid red;
+  flex-shrink: 1;
 }
 
 .cardWrapper {
