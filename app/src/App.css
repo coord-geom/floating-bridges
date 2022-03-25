@@ -72,7 +72,7 @@
   display: flex;
   box-sizing: border-box;
   width: 100%;
-  margin-top: 85vh;
+  margin-top: 80vh;
   justify-content: center;
   align-items: center;
   position: absolute;
@@ -113,7 +113,7 @@
   max-height: 98vh;
   height:98vh;
   position: absolute;
-  border: 1px solid red;
+  /*border: 1px solid red;*/
   flex-shrink: 1;
 }
 

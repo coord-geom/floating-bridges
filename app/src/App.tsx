@@ -200,8 +200,36 @@ function App() {
     console.log(selLst)
   }
 
+  const checkValidCard = (cardToPlay:number, trump:number, breakTrump:boolean, firstCard:number, hand:number[]) => {
+    // We define the params as follows:
+    // cardToPlay: the card which we wish to check the legality of.
+    // trump: the trump suit 
+    // breakTrump: whether the trump has been broken yet or not. 
+    // firstCard: the firstCard played. If the current player is to play the next card, this value will be negative
+
+    const cardToPlaySuit = Math.floor(cardToPlay/13)
+
+    if (firstCard < 0){
+      //current player is to play the next card
+      if (breakTrump) return true
+      else {
+        return (cardToPlaySuit !== trump)
+      }
+    }
+    else{
+      const firstCardSuit = Math.floor(firstCard/13)
+      if (cardToPlaySuit === firstCardSuit) return true
+      else{
+        //the suit is different! Check for other cards in the hand which are legal. 
+        for (var i = 0; i < hand.length; ++i){
+          if (Math.floor(hand[i]/13) === firstCardSuit) return false
+        } 
+        return true
+      }
+    }
+  }
+
   // This function removes the selected card, if any, and outputs the card num of the removed card. 
-  // TODO this function will have to be changed to check for the legality of the card removed. 
   // TODO this function will have to be changed to communicate with the server
   const handleClickSubmit = () => {
     console.log("Calling handle Click Submit!!!!")
@@ -214,7 +242,12 @@ function App() {
 
     if (selected === -1){
       // eslint-disable-next-line no-restricted-globals
-      const hahaWhatsThisIJustWannaSuppressTheWarningLmfao = confirm("Please Select a Card!")
+      confirm("Please Select a Card!")
+      return -1
+    }
+    else if (!checkValidCard(cardList[selected], 0, true, -1, cardList)){
+      // eslint-disable-next-line no-restricted-globals
+      confirm("This card is not legal to play!")
       return -1
     }
     else {
