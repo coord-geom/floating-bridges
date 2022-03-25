@@ -58,6 +58,12 @@
   margin: 2px;
 }
 
+.card-hidden-rot {
+  max-width: 7%;
+  margin: 2px;
+  overflow: hidden;
+}
+
 .flex-hand {
   display: flex;
 }
@@ -79,20 +85,19 @@
 /* https://stackoverflow.com/questions/43919067/make-flex-items-overlap */
 .flex-other-hand-1 {
   display: flex;
-  margin-top: 20%;
+  flex-direction: column;
   align-content: center;
-  max-width: 100%;
-  transform: rotate(90deg);
+  justify-content: center;
+  max-height: 98vh; /*https://stackoverflow.com/questions/11516291/css-get-height-of-screen-resolution*/
+  height:98vh;
   margin-left: 0%;
   position: absolute;
-
 }
 
 .flex-other-hand-2 {
   display: flex;
   box-sizing: border-box;
   width: 100%;
-  margin-top: 1%;
   justify-content: center;
   align-items: center;
   position: absolute;
@@ -100,10 +105,14 @@
 
 .flex-other-hand-3 {
   display: flex;
-  margin-top: 20%;
-  max-width: 100%;
-  transform: rotate(270deg);
+  flex-direction: column;
+  align-content: center;
+  justify-content: center;
+  margin-left: 90%;
+  max-height: 98vh; /*https://stackoverflow.com/questions/11516291/css-get-height-of-screen-resolution*/
+  height:98vh;
   position: absolute;
+  border: 1px solid red;
 }
 
 .cardWrapper {

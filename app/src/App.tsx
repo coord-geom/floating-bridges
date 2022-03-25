@@ -95,6 +95,24 @@ export const OthHand:FC<OthHandProps> = (props) => {
   );
 }
 
+interface OthHandPropsSide {
+  numCards: number
+  side: number //1 for left, 2 for top, 3 for right
+}
+
+export const OthHandSide:FC<OthHandPropsSide> = (props) => {
+  return (
+    <div className={
+      (props.side === 1) ? "flex-other-hand-1" : (props.side === 2) ? "flex-other-hand-2" : "flex-other-hand-3"
+    }>
+      {Array(props.numCards).fill(69420).map((val, i) => 
+        <img src={require("./sprites/back_rot.png")} alt={"Empty Card"} 
+        className={"card-hidden-rot"}/>
+      )}
+    </div>
+  );
+}
+
 
 type cardSelected = boolean
 
@@ -235,8 +253,8 @@ function App() {
         handleClickSubmit={handleClickSubmit}
       />
       <OthHand side={2} numCards={13} />
-      <OthHand side={1} numCards={13} />
-      <OthHand side={3} numCards={13} />
+      <OthHandSide side={1} numCards={5} />
+      <OthHandSide side={3} numCards={13} />
     </div>
   )
 }
