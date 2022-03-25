@@ -88,13 +88,29 @@
   flex-direction: column;
   align-content: center;
   justify-content: center;
-  max-height: 98vh; /*https://stackoverflow.com/questions/11516291/css-get-height-of-screen-resolution*/
-  height:98vh;
-  margin-left: 2vw;
+  max-height: 100vh; /*https://stackoverflow.com/questions/11516291/css-get-height-of-screen-resolution*/
+  height:100vh;
+  padding-left: 1vw;
+  padding-right: 1vw;
   position: absolute;
 }
 
+.flex-other-hand-1-partner {
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  justify-content: center;
+  max-height: 100vh; /*https://stackoverflow.com/questions/11516291/css-get-height-of-screen-resolution*/
+  height:100vh;
+  padding-left: 1vw;
+  padding-right: 1vw;
+  position: absolute;
+  background-color: rgba(94,184,118,0.5);
+}
+
 .flex-other-hand-2 {
+  padding-top: 2vh;
+  padding-bottom: 2vh;
   display: flex;
   box-sizing: border-box;
   width: 100%;
@@ -103,18 +119,118 @@
   position: absolute;
 }
 
+.flex-other-hand-2-partner {
+  padding-top: 2vh;
+  padding-bottom: 2vh;
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  background-color: rgba(94,184,118,0.5);
+}
+
 .flex-other-hand-3 {
   display: flex;
   flex-direction: column;
   align-content: center;
   justify-content: center;
-  margin-right: 2vw;
-  margin-left: 92vw;
-  max-height: 98vh;
-  height:98vh;
+  padding-left: 1vw;
+  padding-right: 1vw;
+  margin-left: 90vw;
+  max-height: 100vh;
+  height:100vh;
   position: absolute;
   /*border: 1px solid red;*/
   flex-shrink: 1;
+}
+
+.flex-other-hand-3-partner {
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  justify-content: center;
+  padding-left: 1vw;
+  padding-right: 1vw;
+  margin-left: 92vw;
+  max-height: 100vh;
+  height:100vh;
+  position: absolute;
+  background-color: rgba(94,184,118,0.5);
+  flex-shrink: 1;
+}
+
+.flex-middle-cards {
+  display: flex;
+  align-content: center;
+  justify-content: center;
+  padding-top: 40vh;
+  position: absolute;
+  /*border: 1px solid red;*/
+  flex-shrink: 1;
+}
+
+.info-table-0 {
+  align-content: center;
+  justify-content: center;
+  top: 65%;
+  left: 50%;
+  /* bring your own prefixes */
+  transform: translate(-50%, -50%);
+  padding-left: 2vw;
+  padding-right: 2vw;
+  position: absolute;
+  background-color: rgba(37, 238, 90, 0.5);
+  /*border: 3px solid #73AD21;*/
+}
+
+.info-table-1 {
+  align-content: center;
+  justify-content: center;
+  top: 47%;
+  left: 25%;
+  /* bring your own prefixes */
+  transform: translate(-50%, -50%);
+  padding-left: 2vw;
+  padding-right: 2vw;
+  position: absolute;
+  background-color: rgba(37, 238, 90, 0.5);
+  /*border: 3px solid #73AD21;*/
+}
+
+.info-table-2 {
+  align-content: center;
+  justify-content: center;
+  top: 30%;
+  left: 50%;
+  /* bring your own prefixes */
+  transform: translate(-50%, -50%);
+  padding-left: 2vw;
+  padding-right: 2vw;
+  position: absolute;
+  background-color: rgba(37, 238, 90, 0.5);
+  /*border: 3px solid #73AD21;*/
+}
+
+.info-table-3 {
+  align-content: center;
+  justify-content: center;
+  top: 47%;
+  left: 75%;
+  /* bring your own prefixes */
+  transform: translate(-50%, -50%);
+  padding-left: 2vw;
+  padding-right: 2vw;
+  position: absolute;
+  background-color: rgba(37, 238, 90, 0.5);
+  /*border: 3px solid #73AD21;*/
+}
+
+.info-text {
+  font: 30px "Century Gothic", Futura, sans-serif;
+  text-align: center;
+  line-height: 0.5;
 }
 
 .cardWrapper {

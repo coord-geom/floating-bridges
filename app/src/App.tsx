@@ -34,6 +34,7 @@ export const Card: FC<CardProps> = (props) => {
   
 }
 
+
 interface HandProps {
   cardLst: number[]
   selLst: boolean[]
@@ -71,15 +72,46 @@ export const Hand:FC<HandProps> = (props) => {
   );
 }
 
+export const MiddleHand:FC<HandProps> = (props) => {
+  const getSuit = (card:number) => {
+    console.log(props.cardLst)
+    return Math.floor(card/13)
+  }
+
+  const getNumber = (card:number) => {
+    return card%13
+  }
+
+  return (
+    <div className='flex-middle-cards'>
+      {props.cardLst.map((val, i) => 
+        <Card 
+          suit={getSuit(val)} 
+          num={getNumber(val)} 
+          hidden={val === -1} 
+          selected={props.selLst[i]} 
+          handleClick={() => props.handleClickCard(i)}
+          key={i}
+        />
+      )}
+    </div>
+  );
+}
+
+
 interface OthHandProps {
   numCards: number
   side: number //1 for left, 2 for top, 3 for right
+  partner: boolean
 }
 
 export const OthHand:FC<OthHandProps> = (props) => {
   return (
     <div className={
-      (props.side === 1) ? "flex-other-hand-1" : (props.side === 2) ? "flex-other-hand-2" : "flex-other-hand-3"
+      (props.side === 1) ? 
+        ((props.partner) ? "flex-other-hand-1-partner" : "flex-other-hand-1") : 
+        (props.side === 2) ? (props.partner) ? "flex-other-hand-2-partner" : "flex-other-hand-2"
+        : (props.partner) ? "flex-other-hand-3-partner" : "flex-other-hand-3"
     }>
       {Array(props.numCards).fill(69420).map((val, i) => 
         <Card 
@@ -95,20 +127,38 @@ export const OthHand:FC<OthHandProps> = (props) => {
   );
 }
 
-interface OthHandPropsSide {
-  numCards: number
-  side: number //1 for left, 2 for top, 3 for right
-}
-
-export const OthHandSide:FC<OthHandPropsSide> = (props) => {
+export const OthHandSide:FC<OthHandProps> = (props) => {
   return (
     <div className={
-      (props.side === 1) ? "flex-other-hand-1" : (props.side === 2) ? "flex-other-hand-2" : "flex-other-hand-3"
+      (props.side === 1) ? 
+        ((props.partner) ? "flex-other-hand-1-partner" : "flex-other-hand-1") : 
+        (props.side === 2) ? (props.partner) ? "flex-other-hand-2-partner" : "flex-other-hand-2"
+        : (props.partner) ? "flex-other-hand-3-partner" : "flex-other-hand-3"
     }>
       {Array(props.numCards).fill(69420).map((val, i) => 
         <img src={require("./sprites/back_rot.png")} alt={"Empty Card"} 
         className={"card-hidden-rot"}/>
       )}
+    </div>
+  );
+}
+
+interface InfoTableProps {
+  setsWon: number
+  partner: boolean
+  breakTrump: boolean
+  trump:number
+  playerPos: number //0,1,2,3 clockwise starting from the botttom.
+}
+
+export const InfoTable:FC<InfoTableProps> = (props) => {
+  const suits = ["Clubs", "Diamonds", "Hearts", "Spades"]
+  return (
+    <div className={"info-table-" + props.playerPos}>
+      <p className='info-text'>{"Sets Won: " + props.setsWon}</p>
+      <p className='info-text'>{(props.playerPos === 0) ? "" : "Partner: " + ((props.partner) ? "Yes" : "Not revealed/No")}</p>
+      <p className='info-text'>{(props.playerPos === 0) ? "The current trump is: " + suits[props.trump] : ""}</p>
+      <p className='info-text'>{(props.playerPos === 0) ? (props.breakTrump) ? "Trump has been broken" : "Trump has not been broken" : ""}</p>
     </div>
   );
 }
@@ -160,6 +210,10 @@ function App() {
 
     return [cardList1, cardList2, cardList3, cardList4]
   }
+
+  const [breakTrump, setBreakTrump] = useState<boolean> (false)
+
+  const trump = 3
 
   /** States and Functions which have to do with the user's hand **/
   const [cardList, setCardList] = useState<number[]>(
@@ -245,7 +299,7 @@ function App() {
       confirm("Please Select a Card!")
       return -1
     }
-    else if (!checkValidCard(cardList[selected], 0, true, -1, cardList)){
+    else if (!checkValidCard(cardList[selected], trump, breakTrump, -1, cardList)){
       // eslint-disable-next-line no-restricted-globals
       confirm("This card is not legal to play!")
       return -1
@@ -270,8 +324,12 @@ function App() {
   }
 
   /** The other players info. Again, this will need to be updated when you start building the server. **/
-  
+  var partner = 3;
 
+  const [midCardList, setMidCardList] = useState<number[]>(
+    [-1,-1,-1,-1]
+    //[...cardInitList]
+  )
 
 
 
@@ -285,9 +343,20 @@ function App() {
         handleClickCard={handleClickCard}
         handleClickSubmit={handleClickSubmit}
       />
-      <OthHand side={2} numCards={13} />
-      <OthHandSide side={1} numCards={5} />
-      <OthHandSide side={3} numCards={13} />
+      <OthHand side={2} numCards={13} partner={partner === 2}/>
+      <OthHandSide side={1} numCards={13}  partner={partner === 1}/>
+      <OthHandSide side={3} numCards={13}  partner={partner === 3}/>
+      <MiddleHand 
+        cardLst={midCardList}
+        selLst={[false,false,false,false]}
+        playerNum={playerNum}
+        handleClickCard={() => {}}
+        handleClickSubmit={() => {return 69420}}
+      />
+      <InfoTable setsWon={5} partner={true} breakTrump={false} trump={trump} playerPos={0}/>
+      <InfoTable setsWon={5} partner={partner === 1} breakTrump={false} trump={trump} playerPos={1}/>
+      <InfoTable setsWon={5} partner={partner === 2} breakTrump={false} trump={trump} playerPos={2}/>
+      <InfoTable setsWon={5} partner={partner === 3} breakTrump={false} trump={trump} playerPos={3}/>
     </div>
   )
 }
