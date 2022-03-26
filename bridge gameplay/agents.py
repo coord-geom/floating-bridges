@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import random
 from model import Linear_QNet, QTrainer
 from itertools import deque
 
@@ -17,8 +18,20 @@ class Agent:
     
 
 class BiddingAgent(Agent):
+
+    OUTPUT_MAP = [
+                    [0, 0],
+                    [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], 
+                    [2, 1], [2, 2], [2, 3], [2, 4], [2, 5], 
+                    [3, 1], [3, 2], [3, 3], [3, 4], [3, 5], 
+                    [4, 1], [4, 2], [4, 3], [4, 4], [4, 5], 
+                    [5, 1], [5, 2], [5, 3], [5, 4], [5, 5], 
+                    [6, 1], [6, 2], [6, 3], [6, 4], [6, 5], 
+                    [7, 1], [7, 2], [7, 3], [7, 4], [7, 5]
+                                                            ]
+
     def __init__(self):
-        self.model   = Linear_QNet(40,50,36)
+        self.model   = Linear_QNet(43,51,36)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
     
     def get_state(self, game):
@@ -41,8 +54,30 @@ class BiddingAgent(Agent):
 
     def get_action(self, state, game):
         if np.random.random() > self.epsilon:
-            pass
-        
+            move = torch.argmax(self.model(torch.tensor(state))).item()
+            return BiddingAgent.OUTPUT_MAP[move]
+        else:
+            bids = [[0,0]]
+            for i in range(1,8):
+                for j in range(1,6):
+                    if game.last_number < i:
+                        bids.append([i,j])
+                    elif game.last_number == i and game.last_suit < j:
+                        bids.append([i,j])
+            move = random.randrange(len(bids))
+            return bids[move] 
+    
+    def train_long_memory(self):
+        if len(self.memory) > BATCH_SIZE:
+            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
+        else:
+            mini_sample = self.memory
+
+        states, actions, rewards, next_states, dones = zip(*mini_sample)
+        self.trainer.train_step(states, actions, rewards, next_states, dones)
+
+    def train_short_memory(self, state, action, reward, next_state, done):
+        self.trainer.train_step(state, action, reward, next_state, done)
     
 
 class CallingAgent(Agent):

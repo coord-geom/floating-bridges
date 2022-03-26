@@ -9,10 +9,10 @@ Bidding:
 States: 
 
 (x, y) representation of cards (26)
-0/1 List of suits each other player has made a bid on, clockwise (12)
+0/1 List of suits each other player has made a bid on, clockwise (15)
 (x, y) for current bid (2)
 
-Total: 40
+Total: 43
 
 Output:
 All possible bids (36)
@@ -20,9 +20,10 @@ All possible bids (36)
 
 Total: 36
 
-Hidden layer nodes: 76*2/3 = 50 (maybe)
+Hidden layer nodes: 79*2/3 = 51 (maybe)
 
-40 -> 50 -> 36
+43 -> 50 -> 36
 
 Calling:
 Playing:
+
