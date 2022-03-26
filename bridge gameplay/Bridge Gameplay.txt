@@ -1,0 +1,28 @@
+Objective:
+Create AI that can win 70% of the time when bidding
+
+Deep Q-learning (Reinforcement Learning)
+
+
+Bidding:
+
+States: 
+
+(x, y) representation of cards (26)
+0/1 List of suits each other player has made a bid on, clockwise (12)
+(x, y) for current bid (2)
+
+Total: 40
+
+Output:
+All possible bids (36)
+(0, 0), (1-7, 0-4)
+
+Total: 36
+
+Hidden layer nodes: 76*2/3 = 50 (maybe)
+
+40 -> 50 -> 36
+
+Calling:
+Playing:
