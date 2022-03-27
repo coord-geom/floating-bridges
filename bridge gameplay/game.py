@@ -127,8 +127,11 @@ class Bridge:
             return reward, game_over, (self.player_num+1)%4
         elif Bridge.current_phase == Bridge.CALL_PHASE: # if in call partner phase
             if Bridge.bidder_num == self.player_num: # call the partner
-                self.call_partner(action)
-                return reward, game_over, (self.player_num+1)%4
+                valid = self.call_partner(action)
+                if valid:
+                    return reward, game_over, (self.player_num+1)%4
+                else:
+                    return -10000000, game_over, self.player_num
             else:
                 result = self.check_if_partner() # check if you're partner
                 if result: # result returns if you're last person to check
@@ -207,6 +210,9 @@ class Bridge:
     def call_partner(self, action):
         if self.valid_partner(action[0], action[1]):
             Bridge.partner_card = [action[0],action[1]]
+            return True
+        else:
+            return False
 
     def check_if_partner(self): # return whether the next player is the bidder
         if Bridge.partner_card in self.cards:

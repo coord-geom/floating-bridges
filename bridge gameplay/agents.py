@@ -82,8 +82,62 @@ class BiddingAgent(Agent):
         self.trainer.train_step(state, action, reward, next_state, done)
     
 
+
 class CallingAgent(Agent):
-    pass
+    OUTPUT_MAP = [
+                    [1, 10], [1, 11], [1, 12], [1, 13], 
+                    [2, 10], [2, 11], [2, 12], [2, 13],
+                    [3, 10], [3, 11], [3, 12], [3, 13],
+                    [4, 10], [4, 11], [4, 12], [4, 13]
+                                                        ]
+
+    def __init__(self):
+        self.model   = Linear_QNet(43,39,16)
+        self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
+    
+    def get_state(self, game):
+        state = []
+
+        cards = game.cards
+        for card in cards:
+            state.append(card[0])
+            state.append(card[1])
+
+        suits_bid = game.suits_bid
+        for i in range(1,4):
+            id = (game.player_num+i)%4
+            state.extend(suits_bid[id])
+        
+        state.append(game.last_number, game.last_suit)
+
+    def remember(self, state, action, reward, state_, done):
+        self.memory.append((state, action, reward, state_, done))
+
+    def get_action(self, state, game):
+        if np.random.random() > self.epsilon:
+            move = torch.argmax(self.model(torch.tensor(state))).item()
+            if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
+            return CallingAgent.OUTPUT_MAP[move]
+        else:
+            called = False
+            if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
+            while (not called):
+                call = random.choice(CallingAgent.OUTPUT_MAP)
+                if call not in game.cards:
+                    called = True
+                    return call
+    
+    def train_long_memory(self):
+        if len(self.memory) > BATCH_SIZE:
+            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
+        else:
+            mini_sample = self.memory
+
+        states, actions, rewards, next_states, dones = zip(*mini_sample)
+        self.trainer.train_step(states, actions, rewards, next_states, dones)
+
+    def train_short_memory(self, state, action, reward, next_state, done):
+        self.trainer.train_step(state, action, reward, next_state, done)
 
 class PlayingAgent(Agent):
     pass
