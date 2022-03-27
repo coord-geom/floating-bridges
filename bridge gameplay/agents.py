@@ -55,6 +55,7 @@ class BiddingAgent(Agent):
     def get_action(self, state, game):
         if np.random.random() > self.epsilon:
             move = torch.argmax(self.model(torch.tensor(state))).item()
+            if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
             return BiddingAgent.OUTPUT_MAP[move]
         else:
             bids = [[0,0]]
@@ -65,6 +66,7 @@ class BiddingAgent(Agent):
                     elif game.last_number == i and game.last_suit < j:
                         bids.append([i,j])
             move = random.randrange(len(bids))
+            if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
             return bids[move] 
     
     def train_long_memory(self):
