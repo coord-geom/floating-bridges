@@ -1,7 +1,10 @@
-from agent import Agent
+from agents import BiddingAgent, CallingAgent, PlayingAgent
 from game import Bridge
 import time
 
+# code has been commented because it doesn't work
+
+'''
 agents = [Agent() for i in range(4)]
 games = [Bridge(i) for i in range(4)]
 
@@ -51,3 +54,4 @@ while True:
         agents[j].train_long_memory()
     
     i+=1
+'''

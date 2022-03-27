@@ -86,8 +86,10 @@ class Bridge:
             Bridge.cards_played = []
             Bridge.bid_not_zero = False
             Bridge.game_thrower = None
+            Bridge.suits_bid = [[0]*5]*4
 
         self.cards = sorted(Bridge.card_deck[::(4-self.player_num)]) # deal the cards as usual
+        self.org_cards = self.cards[:]
         for card in self.cards:
             Bridge.card_deck.remove(card)
 
@@ -205,7 +207,7 @@ class Bridge:
 
     def valid_partner(self, suit, number):
         if number <= 0 or number > 13 or suit < 1 or suit > 4: return False
-        return (suit,number) not in self.cards
+        return [suit,number] not in self.cards
 
     def call_partner(self, action):
         if self.valid_partner(action[0], action[1]):

@@ -16,6 +16,21 @@ class Agent:
         self.gamma      = 0.9
         self.memory     = deque(maxlen=MAX_MEMORY)
     
+    def train_long_memory(self):
+        if len(self.memory) > BATCH_SIZE:
+            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
+        else:
+            mini_sample = self.memory
+
+        states, actions, rewards, next_states, dones = zip(*mini_sample)
+        self.trainer.train_step(states, actions, rewards, next_states, dones)
+
+    def train_short_memory(self, state, action, reward, next_state, done):
+        self.trainer.train_step(state, action, reward, next_state, done)
+
+    def remember(self, state, action, reward, state_, done):
+        self.memory.append((state, action, reward, state_, done))
+    
 
 class BiddingAgent(Agent):
 
@@ -49,8 +64,6 @@ class BiddingAgent(Agent):
         
         state.append(game.last_number, game.last_suit)
 
-    def remember(self, state, action, reward, state_, done):
-        self.memory.append((state, action, reward, state_, done))
 
     def get_action(self, state, game):
         if np.random.random() > self.epsilon:
@@ -69,19 +82,6 @@ class BiddingAgent(Agent):
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
             return bids[move] 
     
-    def train_long_memory(self):
-        if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
-        else:
-            mini_sample = self.memory
-
-        states, actions, rewards, next_states, dones = zip(*mini_sample)
-        self.trainer.train_step(states, actions, rewards, next_states, dones)
-
-    def train_short_memory(self, state, action, reward, next_state, done):
-        self.trainer.train_step(state, action, reward, next_state, done)
-    
-
 
 class CallingAgent(Agent):
     OUTPUT_MAP = [
@@ -110,9 +110,6 @@ class CallingAgent(Agent):
         
         state.append(game.last_number, game.last_suit)
 
-    def remember(self, state, action, reward, state_, done):
-        self.memory.append((state, action, reward, state_, done))
-
     def get_action(self, state, game):
         if np.random.random() > self.epsilon:
             move = torch.argmax(self.model(torch.tensor(state))).item()
@@ -126,18 +123,61 @@ class CallingAgent(Agent):
                 if call not in game.cards:
                     called = True
                     return call
-    
-    def train_long_memory(self):
-        if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
-        else:
-            mini_sample = self.memory
-
-        states, actions, rewards, next_states, dones = zip(*mini_sample)
-        self.trainer.train_step(states, actions, rewards, next_states, dones)
-
-    def train_short_memory(self, state, action, reward, next_state, done):
-        self.trainer.train_step(state, action, reward, next_state, done)
 
 class PlayingAgent(Agent):
-    pass
+
+    def __init__(self):
+        self.model   = Linear_QNet(51,42,13)
+        self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
+    
+    def get_state(self, game):
+        state = []
+
+        cards = game.cards
+        for card in cards:
+            state.append(card[0])
+            state.append(card[1])
+        for i in range(13-len(cards)):
+            state.append(0)
+            state.append(0)
+
+        suits_bid = game.suits_bid
+        for i in range(1,4):
+            id = (game.player_num+i)%4
+            state.extend(suits_bid[id])
+        
+        state.append(game.last_number, game.last_suit)
+
+        # partner
+        if game.bidder_side: state.append(1)
+        else: state.append(0)
+
+        # last 3 cards played
+        past_cards = game.past_cards
+        if len(past_cards) >= 3:
+            for i in range(3):
+                out = past_cards.pop()
+                state.append(out[0])
+                state.append(out[1])
+        else:
+            non_cards = 3-len(past_cards)
+            for tuple in past_cards:
+                state.append(tuple[0])
+                state.append(tuple[1])
+            for i in range(non_cards): 
+                    state.append(-1)
+                    state.append(-1)
+        
+        # trump broken
+        if game.trump_broken: state.append(1)
+        else: state.append(0)
+
+
+    def get_action(self, state, game):
+        if np.random.random() > self.epsilon:
+            move = torch.argmax(self.model(torch.tensor(state))).item()
+            if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
+            return game.org_cards[move]
+        else:
+            if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
+            return game.org_cards[random.randrange(13)]

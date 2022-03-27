@@ -6,7 +6,7 @@ import numpy as np
 from collections import deque
 from game import Bridge
 from model import Linear_QNet, QTrainer
-from snake_agent import BATCH_SIZE, MAX_MEMORY
+
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000

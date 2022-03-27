@@ -25,5 +25,38 @@ Hidden layer nodes: 79*2/3 = 51 (maybe)
 43 -> 50 -> 36
 
 Calling:
+
+States:
+
+(x, y) representation of cards (26)
+0/1 List of suits each other player has made a bid on, clockwise (15)
+(x, y) for current bid (2)
+
+Total: 43
+
+Output:
+AKQJ of each suit (16)
+
+Total: 16
+
+Hidden layer nodes: 59*2/3 = 39 (maybe)
+
+
 Playing:
+
+(x, y) representation of cards (26)
+0/1 List of suits each other player has made a bid on, clockwise (15)
+(x, y) for current bid (2)
+(x, y) for cards played (6)
+0/1 for trump broken
+0/1 for bidder side
+
+... 52 for cards played out??
+
+Total: 51
+
+Output:
+index of cards (13)
+
+Hidden layer nodes: 61/3*2 = 42
 
