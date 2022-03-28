@@ -1,6 +1,9 @@
 import random
 from collections import deque
 
+ILLEGAL_PENALTY = -1234567890
+
+
 class Bridge:
 
     card_deck = []
@@ -11,8 +14,7 @@ class Bridge:
 
     suits_bid = [[0]*5]*4
 
-    past_bids = deque(maxlen=4)
-    past_cards = deque(maxlen=4)
+    past_cards = []
     bid_not_zero = False
 
     cards_played = []
@@ -29,10 +31,9 @@ class Bridge:
 
     current_phase = 0
 
-    next_starter = 0
+    next_starter = None
     first_suit = None
 
-    partner_revealed = False
     partner_card = None
 
     bidder_sets = 0
@@ -42,18 +43,16 @@ class Bridge:
 
     trump_broken = False
     
-    reshuffle = False
-
     all_passed = False
 
-    game_thrower = None
 
-    stop_game = False
-
+    # This function initializes the Bridge model
+    # and resets all the current settings
     def __init__(self, player_num):          
         self.player_num = player_num # set the turn order
         self.reset_all() 
 
+    # This function resets all the variables locally and globally
     def reset_all(self):
         if self.player_num == 0: # if game start
             Bridge.card_deck = []
@@ -66,22 +65,18 @@ class Bridge:
             Bridge.bid_suit = 0
             Bridge.bid_number = 0
             Bridge.bidder_num = None
-            Bridge.past_bids = deque(maxlen=4)
-            Bridge.past_cards = deque(maxlen=4)
+            Bridge.past_cards = []
             Bridge.last_suit = 0
             Bridge.last_number = 0
             Bridge.num_passes = 0
             Bridge.current_phase = Bridge.BID_PHASE
             Bridge.next_starter = 0
             Bridge.first_suit = None
-            Bridge.partner_revealed = False
             Bridge.partner_card = None
             Bridge.bidder_sets = 0
             Bridge.against_sets = 0
             Bridge.bidder_lst = [0,0,0,0]
             Bridge.trump_broken = False
-            Bridge.reshuffle = False
-            Bridge.stop_game = False
             Bridge.all_passed = False
             Bridge.cards_played = []
             Bridge.bid_not_zero = False
@@ -95,161 +90,198 @@ class Bridge:
 
         self.turn_num = self.player_num # set player num in order of playing
         self.bidder_side = False
-        self.is_partner = False
         self.sets_won = 0
 
-        #if self.check_reshuffle(): # end the game if it is a hand to reshuffle
-        #    Bridge.current_phase = Bridge.END_PHASE
-        #    Bridge.reshuffle = True
-
+    # This function checks if a card hand has 4 or less points, which means it is a reshuffle
     def check_reshuffle(self):
         return self.get_card_points() <= 4
     
+    # This function counts the number of points in the card hand
     def get_card_points(self):
+
         points = 0
         suit_counts = [0,0,0,0]
+
         for t in self.cards:
             points += max(0,t[1]-9)
             suit_counts[t[0]-1] += 1
+
         for count in suit_counts:
             points += max(count-4,0)
+
         return points
 
-    def play_step(self, action): # return reward, gameover, next player
+    # Executes the action at the current phase
+    def play_step(self, action=None): 
 
-        reward = 0
-        game_over = False
+        x = Bridge.current_phase
 
-        if Bridge.current_phase == Bridge.BID_PHASE: # if in bidding phase
-            valid, win = self.bid(action) # make the bid
-            if win:
-                return reward, game_over, self.player_num
-            if not valid:
-                return -10000000, game_over, self.player_num
-            return reward, game_over, (self.player_num+1)%4
-        elif Bridge.current_phase == Bridge.CALL_PHASE: # if in call partner phase
-            if Bridge.bidder_num == self.player_num: # call the partner
-                valid = self.call_partner(action)
-                if valid:
-                    return reward, game_over, (self.player_num+1)%4
-                else:
-                    return -10000000, game_over, self.player_num
-            else:
-                result = self.check_if_partner() # check if you're partner
-                if result: # result returns if you're last person to check
+        # This is the bidding phase
+        if x == Bridge.BID_PHASE:
+
+            if not self.valid_bid(action):
+                return ILLEGAL_PENALTY, False, self.player_num
+
+            self.bid(action)
+
+            return 10, False, (self.player_num+1)%4
+
+        # This is the partner calling phase
+        elif x == Bridge.CALL_PHASE:
+            
+            # If you are just checking for partner, i.e. not the bidder
+            if self.player_num != Bridge.bidder_num:
+                self.check_if_partner()
+                if (self.player_num+1)%4 == Bridge.bidder_num:
                     Bridge.current_phase = Bridge.PLAY_PHASE
-                    return reward, game_over, Bridge.next_starter # person after bidder starts
-                else:
-                    return reward, game_over, (self.player_num+1)%4 # let the next person check
+                return
+
+            if not self.valid_partner(action):
+                return ILLEGAL_PENALTY, False, self.player_num
+
+            Bridge.partner_card = action
+            return 10, False, Bridge.next_starter
+
+        # This is the card playing phase
         elif Bridge.current_phase == Bridge.PLAY_PHASE: # play the card
-            result = self.play(action)
-            if not result:
-                return -10000000, game_over, self.player_num
+
+            if not self.valid_card_play(action):
+                return ILLEGAL_PENALTY, False, self.player_num
+
+            self.play(action)
+
             if len(Bridge.past_cards) == 0:
-                return reward, game_over, Bridge.next_starter # begin new round
+                return 10, False, Bridge.next_starter # begin new round
             else:
-                return reward, game_over, (self.player_num+1)%4 # let the next person play
-        else: # end phase
-            return self.end_game()
+                return 10, False, (self.player_num+1)%4 # let the next person play
 
-    def valid_bid(self, bid): # check if bid is higher
+        return
+
+    # This function checks if the bid made by the player is either:
+    # a pass,
+    # or a bid greater than the current bid
+    def valid_bid(self, bid):
+        
         number, suit = bid
-        if suit == 0 and number == 0: return True # pass if valid
-        if number <= 0 or number > 7 or suit < 1 or suit > 5: return False
-        if number > Bridge.last_number: return True
-        if number < Bridge.last_number: return False
-        return suit > Bridge.last_suit
+        if bid == [0,0]: # A pass is always a valid move
+            return True
+        
+        if number <= 0 or number > 7 \
+            or suit < 1 or suit > 5: # The parameters should not be out of bounds
+            return False
+        
+        if number > Bridge.last_number: # A bid is valid if the number is greater than the current one
+            return True
+        
+        if number < Bridge.last_number: # A bid is invalid if the number is smaller than the current one
+            return False
+        
+        return suit > Bridge.last_suit # A bid is valid if the suit is greater than the current one
 
-    def bid(self, action): # returns validity of bid, and if you won the bid
-        if Bridge.num_passes < 3:
-            if Bridge.last_number == 7 and Bridge.last_suit == 5: # if the previous person bid 7nt
-                Bridge.past_bids.append([0,0]) # auto pass
+    # This function executes a move to bid or not to bid
+    def bid(self, action):
+        
+        if Bridge.num_passes < 3: # If less than 3 people before you have passed
+            
+            if action == [0,0]: # You did not win the bid if you passed
                 Bridge.num_passes += 1
-                return True, False 
-            elif self.valid_bid(action):
-                Bridge.past_bids.append(action)
-                if action == [0,0]: Bridge.num_passes += 1 # pass
-                else: 
-                    Bridge.bid_not_zero = True
-                    Bridge.last_number, Bridge.last_suit = action # raise bid
-                    Bridge.suits_bid[self.player_num][action[1]-1] = 1
-                    Bridge.num_passes = 0 # reset passes
-                return True, False
-            return False, False # invalid bid
-        else: # 3 passes
-            if Bridge.last_number == 7 and Bridge.last_suit == 5: # you bid 7nt
-                return True, True
-            else:
-                if not Bridge.bid_not_zero: # everyone passes at the start
-                    if action == [0,0]: # if you pass
-                        Bridge.past_bids.append([0,0])
-                        Bridge.all_passed = True
-                        Bridge.current_phase = Bridge.END_PHASE
-                        return True, False
-                    else:
-                        if self.valid_bid(action):
-                            Bridge.past_bids.append(action)
-                            Bridge.last_number, Bridge.last_suit = action # raise bid
-                            Bridge.suits_bid[self.player_num][action[1]-1] = 1
-                            Bridge.num_passes = 0 # reset passes
-                            return True, False
-                        else: return False, False
-                else: # you win your bid
+
+                if Bridge.num_passes == 3 and Bridge.bid_not_zero: # The person after you has won the bid
+                    
                     Bridge.current_phase = Bridge.CALL_PHASE
                     Bridge.bid_number, Bridge.bid_suit = \
                         Bridge.last_number, Bridge.last_suit
-                    if Bridge.bid_suit == 5: Bridge.next_starter = self.player_num # if bid is no trump
-                    else: Bridge.next_starter = (self.player_num+1)%4
-                    self.bidder_side = True
-                    Bridge.bidder_num = self.player_num
-                    Bridge.bidder_lst[self.player_num] = 1
-                    return True, True
 
-    def valid_partner(self, suit, number):
-        if number <= 0 or number > 13 or suit < 1 or suit > 4: return False
-        return [suit,number] not in self.cards
+                    if Bridge.bid_suit == 5: # If the bidder bid no trump
+                        Bridge.next_starter = (self.player_num + 1) % 4
+                    else: # If the bidder wins the bid with a trump suit
+                        Bridge.next_starter = (self.player_num + 2) % 4
 
-    def call_partner(self, action):
-        if self.valid_partner(action[0], action[1]):
-            Bridge.partner_card = [action[0],action[1]]
-            return True
-        else:
+                    Bridge.bidder_num                       = (self.player_num + 1) % 4
+                    Bridge.bidder_lst[Bridge.bidder_num]    = 1
+
+            else: # You raised the bid
+                Bridge.num_passes                                       = 0
+                Bridge.bid_not_zero                                     = True
+                Bridge.last_number, Bridge.last_suit                    = action
+                Bridge.suits_bid[self.player_num][Bridge.last_suit - 1] = 1
+
+        else: # If all 3 people before you have passed
+            
+            if action == [0,0]: # If you pass too
+                Bridge.num_passes += 1
+                Bridge.all_passed = True
+                Bridge.current_phase = Bridge.END_PHASE
+
+            else: # You raised the bid
+                Bridge.num_passes                                       = 0
+                Bridge.bid_not_zero                                     = True
+                Bridge.last_number, Bridge.last_suit                    = action
+                Bridge.suits_bid[self.player_num][Bridge.last_suit - 1] = 1
+
+    # This function checks if the partner card called by the model is valid
+    def valid_partner(self, card):
+
+        if card[1] <= 0 or card[1] > 13 or card[0] < 1 or card[0] > 4: 
             return False
 
-    def check_if_partner(self): # return whether the next player is the bidder
+        return card not in self.cards
+
+    # This function checks if the player is the partner to the bidder
+    def check_if_partner(self): 
         if Bridge.partner_card in self.cards:
-            self.is_partner = True
             self.bidder_side = True
             Bridge.bidder_lst[self.player_num] = 1
-        return (self.player_num+1)%4 == Bridge.bidder_num
+        
+        # If last person to check
+        if (self.player_num + 1) % 4 == Bridge.bidder_num:
+            Bridge.current_phase = Bridge.PLAY_PHASE
     
-    def valid_card_play(self, suit, number):
+    # This function checks if a card played if valid
+    def valid_card_play(self, card):
+        suit = card[0]
         trump = 0
-        cards = self.cards
-        if [suit,number] not in cards: return False
-        for i in range(len(cards)):
-            card = cards[i]
-            if card[0] == Bridge.bid_suit:
+
+        # If the card played is not in the hand
+        if card not in self.cards: 
+            return False
+
+        # Count the number of trump suits owned by player
+        for c in self.cards: 
+            if c[0] == Bridge.bid_suit:
                 trump += 1
-        if self.player_num == Bridge.next_starter: # if starting the round
-            if len(self.cards) == trump and suit == Bridge.bid_suit: # only trumps left in hand
+
+        # If player is starting the new round
+        if self.player_num == Bridge.next_starter:
+
+            # If the trump has been broken, any card can be played
+            if Bridge.trump_broken:
                 return True
-            elif Bridge.trump_broken: # can play any suit if trump broken
+            
+            # If player only has trump suits left in the hand
+            elif len(self.cards) == trump and suit == Bridge.bid_suit:
+                Bridge.trump_broken = True
                 return True
-            else: return suit != Bridge.bid_suit # only play non trump
-        else: # not starting the round
-            right_suits = False
-            for i in range(len(cards)):
-                card = cards[i]
-                if card[0] == Bridge.first_suit:
-                    right_suits = True
-                    break
-            if right_suits: # if have the suit of the first card played
-                return suit == Bridge.first_suit
+
+            # The player can only play a non-trump suit
+            else: 
+                return suit != Bridge.bid_suit
+        
+        # If player is after the starter
+        else:
+
+            # Check if player has the suit of the first card played
+            for c in self.cards:
+                if c[0] == Bridge.first_suit:
+                    return suit == Bridge.first_suit
+
+            # If they don't, any card can be played
             return True
- 
-    def largest_card(self, cards): # return person with the largest card
-        # check if a trump card was played
+    
+    # This function returns the index of the player who won the set
+    def largest_card(self, cards):
+        
+        # Check if a trump card was played
         trumps = []
         right_suits = []
         for i in range(4):
@@ -258,72 +290,71 @@ class Bridge:
                 trumps.append([card[1],i])
             if card[0] == Bridge.first_suit:
                 right_suits.append([card[1],i])
-        if len(trumps) > 0: # largest trump wins
+
+        winner = -1
+
+        # If more than one trump card is played, the largest wins
+        if len(trumps) > 0:
             trumps.sort()
             winner = (trumps[-1][1] + Bridge.next_starter)%4
-            if Bridge.bidder_lst[winner] == 1: # update total sets won 
+
+            # Update total sets won
+            if Bridge.bidder_lst[winner] == 1: 
                 Bridge.bidder_sets += 1
             else:
                 Bridge.against_sets += 1
-            if Bridge.bidder_sets == 6 + Bridge.bid_number \
-                or Bridge.against_sets == 8 - Bridge.bid_number: # end game early if winner found
-                Bridge.current_phase = Bridge.END_PHASE
-            return winner
-        else: # largest non-trump wins
+
+        # Otherwise, the largest of the first suit wins
+        else:
             right_suits.sort()
             winner = (right_suits[-1][1] + Bridge.next_starter)%4
-            if Bridge.bidder_lst[winner] == 1: # update total sets won
+
+            # Update total sets won
+            if Bridge.bidder_lst[winner] == 1:
                 Bridge.bidder_sets += 1
             else:
                 Bridge.against_sets += 1
-            if Bridge.bidder_sets == 6 + Bridge.bid_number \
-                or Bridge.against_sets == 8 - Bridge.bid_number: # end game early if winner found
-                Bridge.current_phase = Bridge.END_PHASE
-            return winner     
 
-    def play(self, action):
-        if self.valid_card_play(action[0], action[1]):
-            Bridge.cards_played.append([action[0],action[1]])
-            Bridge.past_cards.append(action)
-            self.cards.remove([action[0],action[1]]) # remove card from hand
-            if action[0] == Bridge.bid_suit and Bridge.trump_broken == False: # if valid card is trump
-                Bridge.trump_broken = True 
-            if self.player_num == Bridge.next_starter: # if you are the first player
-                Bridge.first_suit = action[0]
-            if (action[0],action[1]) == Bridge.partner_card: # if you reveal partner this turn
-                Bridge.partner_revealed = True
-            if (self.player_num+1)%4 == Bridge.next_starter: # if you are playing last
-                Bridge.next_starter = self.largest_card(list(Bridge.past_cards))
-                Bridge.past_cards = deque(maxlen=4)
-            return True
-        else: # invalid card
-            return False
+        # If we have reached the end of the game
+        if Bridge.bidder_sets + Bridge.against_sets == 13:
+            Bridge.current_phase = Bridge.END_PHASE
 
-    def end_game(self):
-        if Bridge.reshuffle:
-            Bridge.stop_game = True
-            return 0,True,(self.player_num+1)%4
+        return winner
+
+
+    # This function executes a move to play a card
+    def play(self, card):
+
+        Bridge.cards_played.append(card)
+        Bridge.past_cards.append(card)
         
-        if Bridge.all_passed:
-            if self.player_num == 3: # play starts from player 0
-                Bridge.stop_game = True
-            return -10000000,True,(self.player_num+1)%4
+        # Remove card from hand
+        self.cards.remove(card) 
+        
+        # If valid card is trump
+        if card[0] == Bridge.bid_suit:
+            Bridge.trump_broken = True
+        
+        # If you are the first player
+        if self.player_num == Bridge.next_starter: 
+            Bridge.first_suit = card[0]
 
-        if Bridge.game_thrower is not None:
-            if self.player_num == self.next_starter:
-                return -10000000,True,(self.player_num+1)%4
-            elif (self.player_num+1)%4 == Bridge.next_starter:
-                Bridge.stop_game = True
-            return 0,True,(self.player_num+1)%4
+        # If you are the last player
+        elif (self.player_num+1)%4 == Bridge.next_starter: 
+            Bridge.next_starter = self.largest_card(Bridge.past_cards)
+            Bridge.past_cards = []
+        
+    def get_rewards(self):
 
         side = Bridge.bidder_lst[self.player_num]
-
-        if (self.player_num+1)%4 == Bridge.next_starter: # one round to close
-            Bridge.stop_game = True
             
         if Bridge.bidder_sets == 6 + Bridge.bid_number: # bidder win
-            if side == 1: return 2**Bridge.bid_number,True,(self.player_num+1)%4 # bidder side
-            else: return -2**Bridge.bid_number,True,(self.player_num+1)%4 # against side
+            if side == 1: 
+                return 10 * 2**Bridge.bid_number # bidder side
+            else: 
+                return -(10 * 2**Bridge.bid_number) # against side
         else: # against win
-            if side == 0: return 20,True,(self.player_num+1)%4 # against side
-            else: return -20,True,(self.player_num+1)%4 # bidder side
+            if side == 0: 
+                return 10 * 2**(Bridge.bid_number-1) # against side
+            else: 
+                return -10 * 2**(Bridge.bid_number-1) # bidder side
