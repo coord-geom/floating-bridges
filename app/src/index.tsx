@@ -1,12 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
+import AppRoom from './AppRoom';
+import JoinRoom from './JoinRoomScreen';
 import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <AppRoom />
   </React.StrictMode>,
   document.getElementById('root')
 );
