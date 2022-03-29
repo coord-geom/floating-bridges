@@ -1,6 +1,5 @@
 import socketIO from 'socket.io'
 
-
 interface ServerToClientEvents {
   noArg: () => void;
   basicEmit: (a: number, b: string, c: Buffer) => void;
