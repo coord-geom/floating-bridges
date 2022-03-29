@@ -3,6 +3,9 @@ from game import Bridge
 import time
 import torch
 
+NUMGAMES = 30000
+PRINTCYCLE = 1000
+
 # code has been commented because it doesn't work
 
 agents = [[BiddingAgent(), CallingAgent(), PlayingAgent()] for _ in range(4)]
@@ -20,9 +23,11 @@ def check_reshuffle():
 
 game_cnt = 0
 
+true_start = time.time()
+
 start = time.time()
 
-while game_cnt < 1000:
+while (time.time()-true_start < 100): # game_cnt < NUMGAMES
 
     next_player = game_cnt % 4
     old_player = next_player
@@ -164,11 +169,11 @@ while game_cnt < 1000:
     
     game_cnt += 1
 
-    if game_cnt%100 == 0:
+    if game_cnt%PRINTCYCLE == 0:
         for agent in agents:
             for a in agent:
                 a.train_long_memory()
-        print('Training Cycle',game_cnt/100,':',time.time()-start,'seconds\n')
+        print('Game Count:',game_cnt,'Time:',time.time()-start,'seconds\n')
         start = time.time()
 
     bridges = [Bridge(i) for i in range(4)]
