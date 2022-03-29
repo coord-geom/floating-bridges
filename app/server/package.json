@@ -17,10 +17,8 @@
     "typescript": "^4.5.5",
     "web-vitals": "^2.1.4"
   },
-  "type": "module",
-  "module": "CommonJS",
   "scripts": {
-    "devStart": "ts-node server.ts"
+    "devStart": "nodemon server.js"
   },
   "eslintConfig": {
     "extends": [
