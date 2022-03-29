@@ -77,16 +77,18 @@ class BiddingAgent(Agent):
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
             return BiddingAgent.OUTPUT_MAP[move]
         else:
-            bids = [[0,0] for _ in range(1000)]
-            for i in range(1,8):
-                for j in range(1,6):
-                    if game.last_number < i:
-                        bids.append([i,j])
-                    elif game.last_number == i and game.last_suit < j:
-                        bids.append([i,j])
-            move = random.randrange(len(bids))
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
-            return bids[move] 
+            return self.explore(game) 
+        
+    def explore(self, game):
+        bids = [[0,0] for _ in range(500)]
+        for i in range(1,8):
+            for j in range(1,6):
+                if game.last_number < i:
+                    bids.append([i,j])
+                elif game.last_number == i and game.last_suit < j:
+                    bids.append([i,j])
+        return bids[random.randrange(len(bids))]
     
 
 class CallingAgent(Agent):
@@ -127,13 +129,16 @@ class CallingAgent(Agent):
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
             return CallingAgent.OUTPUT_MAP[move]
         else:
-            called = False
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
-            while not called:
-                call = random.choice(CallingAgent.OUTPUT_MAP)
-                if call not in game.cards:
-                    called = True
-                    return call
+            return self.explore(game)
+    
+    def explore(self, game):
+        called = False
+        while not called:
+            call = random.choice(CallingAgent.OUTPUT_MAP)
+            if call not in game.cards:
+                called = True
+                return call
 
 
 class PlayingAgent(Agent):
@@ -197,4 +202,7 @@ class PlayingAgent(Agent):
             return game.org_cards[move]
         else:
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
-            return game.org_cards[random.randrange(13)]
+            return self.explore(game)
+    
+    def explore(self, game):
+        return game.cards[random.randrange(len(game.cards))]
