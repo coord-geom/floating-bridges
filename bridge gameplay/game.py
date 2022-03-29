@@ -1,5 +1,4 @@
 import random
-from collections import deque
 
 ILLEGAL_PENALTY = -1234567890
 

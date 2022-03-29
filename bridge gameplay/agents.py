@@ -9,8 +9,30 @@ BATCH_SIZE = 1000
 MAX_MEMORY = 100000
 LR = 0.01
 
+class Agent:
+    def __init__(self):
+        self.epsilon = 1
+        self.eps_min = 0.00001
+        self.eps_dec = 0.00001
+        self.gamma   = 0.9
+        self.memory  = deque(maxlen=MAX_MEMORY)
 
-class BiddingAgent():
+    def train_long_memory(self):
+        if len(self.memory) > BATCH_SIZE:
+            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
+        else:
+            mini_sample = self.memory
+
+        states, actions, rewards, next_states, dones = zip(*mini_sample)
+        self.trainer.train_step(states, actions, rewards, next_states, dones)
+
+    def train_short_memory(self, state, action, reward, next_state, done):
+        self.trainer.train_step(state, action, reward, next_state, done)
+
+    def remember(self, state, action, reward, state_, done):
+        self.memory.append((state, action, reward, state_, done))
+
+class BiddingAgent(Agent):
 
     OUTPUT_MAP = [
                     [0, 0],
@@ -24,12 +46,8 @@ class BiddingAgent():
                                                             ]
 
     def __init__(self):
+        super().__init__()
         self.model   = Linear_QNet(43,51,36)
-        self.epsilon    = 1
-        self.eps_min    = 0.001
-        self.eps_dec    = 0.0005
-        self.gamma      = 0.9
-        self.memory     = deque(maxlen=MAX_MEMORY)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
     
     def get_state(self, game):
@@ -59,7 +77,7 @@ class BiddingAgent():
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
             return BiddingAgent.OUTPUT_MAP[move]
         else:
-            bids = [[0,0]]
+            bids = [[0,0] for _ in range(1000)]
             for i in range(1,8):
                 for j in range(1,6):
                     if game.last_number < i:
@@ -70,22 +88,8 @@ class BiddingAgent():
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
             return bids[move] 
     
-    def train_long_memory(self):
-        if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
-        else:
-            mini_sample = self.memory
 
-        states, actions, rewards, next_states, dones = zip(*mini_sample)
-        self.trainer.train_step(states, actions, rewards, next_states, dones)
-
-    def train_short_memory(self, state, action, reward, next_state, done):
-        self.trainer.train_step(state, action, reward, next_state, done)
-
-    def remember(self, state, action, reward, state_, done):
-        self.memory.append((state, action, reward, state_, done))
-
-class CallingAgent():
+class CallingAgent(Agent):
     OUTPUT_MAP = [
                     [1, 10], [1, 11], [1, 12], [1, 13], 
                     [2, 10], [2, 11], [2, 12], [2, 13],
@@ -94,12 +98,8 @@ class CallingAgent():
                                                         ]
 
     def __init__(self):
+        super().__init__()
         self.model   = Linear_QNet(43,39,16)
-        self.epsilon    = 1
-        self.eps_min    = 0.001
-        self.eps_dec    = 0.0005
-        self.gamma      = 0.9
-        self.memory     = deque(maxlen=MAX_MEMORY)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
     
     def get_state(self, game):
@@ -135,30 +135,12 @@ class CallingAgent():
                     called = True
                     return call
 
-    def train_long_memory(self):
-        if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
-        else:
-            mini_sample = self.memory
 
-        states, actions, rewards, next_states, dones = zip(*mini_sample)
-        self.trainer.train_step(states, actions, rewards, next_states, dones)
-
-    def train_short_memory(self, state, action, reward, next_state, done):
-        self.trainer.train_step(state, action, reward, next_state, done)
-
-    def remember(self, state, action, reward, state_, done):
-        self.memory.append((state, action, reward, state_, done))
-
-class PlayingAgent():
+class PlayingAgent(Agent):
 
     def __init__(self):
+        super().__init__()
         self.model   = Linear_QNet(103,42,13)
-        self.epsilon    = 1
-        self.eps_min    = 0.001
-        self.eps_dec    = 0.0005
-        self.gamma      = 0.9
-        self.memory     = deque(maxlen=MAX_MEMORY)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
     
     def get_state(self, game):
@@ -216,18 +198,3 @@ class PlayingAgent():
         else:
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
             return game.org_cards[random.randrange(13)]
-    
-    def train_long_memory(self):
-        if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
-        else:
-            mini_sample = self.memory
-
-        states, actions, rewards, next_states, dones = zip(*mini_sample)
-        self.trainer.train_step(states, actions, rewards, next_states, dones)
-
-    def train_short_memory(self, state, action, reward, next_state, done):
-        self.trainer.train_step(state, action, reward, next_state, done)
-
-    def remember(self, state, action, reward, state_, done):
-        self.memory.append((state, action, reward, state_, done))

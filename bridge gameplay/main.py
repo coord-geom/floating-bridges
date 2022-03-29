@@ -1,5 +1,6 @@
 from agents import BiddingAgent, CallingAgent, PlayingAgent
 from game import Bridge
+import time
 
 # code has been commented because it doesn't work
 
@@ -18,6 +19,8 @@ def check_reshuffle():
 
 game_cnt = 0
 
+start = time.time()
+
 while True:
 
     next_player = game_cnt % 4
@@ -31,6 +34,7 @@ while True:
         continue
 
     # Execute the bidding phase
+
     while Bridge.current_phase == Bridge.BID_PHASE:
 
         bridge  = bridges[next_player]
@@ -55,6 +59,7 @@ while True:
         call_state = []
         play_states = [None,None,None,None]
         continue
+
 
     # Partner calling phase
 
@@ -81,9 +86,9 @@ while True:
     bridges[(Bridge.bidder_num + 2)%4].play_step()
     bridges[(Bridge.bidder_num + 3)%4].play_step()
 
-    print_cnt = 1
 
     # Execute the card playing phase
+
     while Bridge.current_phase == Bridge.PLAY_PHASE:
         bridge  = bridges[next_player]
         agent   = agents[next_player]
@@ -114,26 +119,23 @@ while True:
         ps      = play_states[id]
         agent[0].train_short_memory(bs[0], bs[1], reward, bs[3], True)
         agent[0].remember(bs[0], bs[1], reward, bs[3], True)
-        agent[0].train_long_memory()
 
         if i == 0:
             cs  = call_state
             agent[1].train_short_memory(cs[0], cs[1], reward, cs[3], True)
             agent[1].remember(cs[0], cs[1], reward, cs[3], True)
-            agent[1].train_long_memory()
         
         agent[2].train_short_memory(ps[0], ps[1], ps[2], ps[3], True)
         agent[2].remember(ps[0], ps[1], ps[2], ps[3], True)
-        agent[2].train_long_memory()
-
+    
     game_cnt += 1
 
-    print('Game',game_cnt)
-    print('Bid number:',Bridge.bid_number,', Bid suit:',Bridge.bid_suit)
-    if Bridge.bidder_sets >= Bridge.bid_number+6:
-        print('Bidder won')
-    else:
-        print('Bidder lost')
+    if game_cnt%100 == 0:
+        for agent in agents:
+            for a in agent:
+                a.train_long_memory()
+        print('Training Cycle',game_cnt/100,':',time.time()-start,'seconds\n')
+        start = time.time()
 
     bridges = [Bridge(i) for i in range(4)]
     bid_states = [None,None,None,None]
