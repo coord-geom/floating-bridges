@@ -90,12 +90,27 @@
   width: 95%;
 }
 
+.sidebar-title{
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-content: center;
+  text-align: center;
+  overflow-wrap: break-word;
+  width: 98%;
+  padding: 1%;
+  height: 5%;
+  font: 25px "Century Gothic", Futura, sans-serif;
+  background-color: rgb(169, 161, 255);
+}
+
 .sidebar-message-log{
   display: flex;
   flex-direction: column;
   overflow: auto;
   width: 100%;
-  min-height: 90%;
+  min-height: 88%;
 }
 
 .sidebar-message-0{

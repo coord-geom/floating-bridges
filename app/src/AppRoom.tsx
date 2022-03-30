@@ -172,6 +172,7 @@ interface SideBarProps {
   sendBid: () => void
   allowBid: boolean
   messages: string[]
+  roomCode:string
 }
 
 export const SideBar:FC<SideBarProps> = (props) =>{  
@@ -184,6 +185,9 @@ export const SideBar:FC<SideBarProps> = (props) =>{
 
   return (
     <div className='sidebar'>
+      <div className='sidebar-title'>
+        {"Room Code: " + props.roomCode}
+      </div>
       <div className='sidebar-message-log'>
         {props.messages.map((val, i) => 
           <div className={'sidebar-message-' + (i%2)}> {val} </div>
@@ -385,7 +389,9 @@ function AppRoom() {
   const [canBid, setCanBid] = useState<boolean> (true) //change to false later
 
   const [sideMessages, setSideMessages] = useState<string[]> (
-    []
+    [
+      
+    ]
   ) 
 
   const sendMessage = () => {
@@ -421,7 +427,7 @@ function AppRoom() {
       <InfoTable setsWon={5} partner={partner === 1} breakTrump={false} trump={trump} playerPos={1} name={"My name"}/>
       <InfoTable setsWon={5} partner={partner === 2} breakTrump={false} trump={trump} playerPos={2} name={"Hello!!!"}/>
       <InfoTable setsWon={5} partner={partner === 3} breakTrump={false} trump={trump} playerPos={3} name={"is"}/>
-      <SideBar sendMessage={sendMessage} sendBid={sendBid} allowBid={canBid} messages={sideMessages}/>
+      <SideBar sendMessage={sendMessage} sendBid={sendBid} allowBid={canBid} messages={sideMessages} roomCode={"asdf"}/>
     </div>
   )
 }
