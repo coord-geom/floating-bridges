@@ -90,6 +90,9 @@ class BiddingAgent(Agent):
                     bids.append([i,j])
         return bids[random.randrange(len(bids))]
     
+    def load_state(self, checkpoint):
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.trainer.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
 class CallingAgent(Agent):
     OUTPUT_MAP = [
@@ -139,6 +142,10 @@ class CallingAgent(Agent):
             if call not in game.cards:
                 called = True
                 return call
+
+    def load_state(self, checkpoint):
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.trainer.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
 
 class PlayingAgent(Agent):
@@ -210,3 +217,7 @@ class PlayingAgent(Agent):
             if game.valid_card_play(card):
                 valid.append(card)
         return valid[random.randrange(len(valid))]
+
+    def load_state(self, checkpoint):
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.trainer.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

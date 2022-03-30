@@ -1,17 +1,14 @@
+import torch
 from agents import BiddingAgent, CallingAgent, PlayingAgent
 from game import Bridge
-import time
-import torch
-import os
-
-NUMGAMES    = 30000
-TIMERUN     = 50000
-PRINTCYCLE  = 1000
-
-# code has been commented because it doesn't work
 
 agents      = [[BiddingAgent(), CallingAgent(), PlayingAgent()] for _ in range(4)]
 bridges     = [Bridge(i) for i in range(4)]
+
+for i in range(4):
+    for j in range(3):
+        checkpoint = torch.load('model/P'+str(3)+'A'+str(j)+'.pth')
+        agents[i][j].load_state(checkpoint)
 
 bid_states  = [None,None,None,None]
 call_state  = []
@@ -24,12 +21,9 @@ def check_reshuffle():
     return False
 
 game_cnt = 0
+bidder_win_cnt = 0
 
-true_start = time.time()
-
-start = time.time()
-
-while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
+while game_cnt<1000: # game_cnt < NUMGAMES
 
     next_player = game_cnt % 4
     old_player = next_player
@@ -62,15 +56,15 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
             move = agent[0].get_action(state, bridge)
         
         reward, done, next_player = bridge.play_step(move)
-        state_n = agent[0].get_state(bridge)
+        #state_n = agent[0].get_state(bridge)
 
-        bid_states[id] = [state, move, reward, state_n, done]
+        #bid_states[id] = [state, move, reward, state_n, done]
 
         if old_player == next_player:
-            repeat_cnt += 1
+           repeat_cnt += 1
 
-        agent[0].train_short_memory(state, move, reward, state_n, done)
-        agent[0].remember(state, move, reward, state_n, done)
+        #agent[0].train_short_memory(state, move, reward, state_n, done)
+        #agent[0].remember(state, move, reward, state_n, done)
 
     # If everyone passes, start a new game
     if Bridge.all_passed:
@@ -101,15 +95,15 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
             move = agent[1].get_action(state, bridge)
 
         reward, done, next_player = bridge.play_step(move)
-        state_n = agent[1].get_state(bridge)
+        #state_n = agent[1].get_state(bridge)
 
-        call_state = [state, move, reward, state_n, done]
+        #call_state = [state, move, reward, state_n, done]
 
         if old_player == next_player:
             repeat_cnt += 1
 
-        agent[1].train_short_memory(state, move, reward, state_n, done)
-        agent[1].remember(state, move, reward, state_n, done)
+        #agent[1].train_short_memory(state, move, reward, state_n, done)
+        #agent[1].remember(state, move, reward, state_n, done)
 
     # For other players to check if they are the partner
     bridges[(Bridge.bidder_num + 1)%4].play_step()
@@ -136,63 +130,33 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
             move = agent[2].get_action(state, bridge)
         
         reward, done, next_player = bridge.play_step(move)
-        state_n = agent[2].get_state(bridge)
+        #state_n = agent[2].get_state(bridge)
         
-        play_states[id] = [state, move, reward, state_n, done]
+        #play_states[id] = [state, move, reward, state_n, done]
 
         if old_player == next_player:
             repeat_cnt += 1
 
-        agent[2].train_short_memory(state, move, reward, state_n, done)
-        agent[2].remember(state, move, reward, state_n, done)
+        #agent[2].train_short_memory(state, move, reward, state_n, done)
+        #agent[2].remember(state, move, reward, state_n, done)
     
     # Delegate rewards to agents
     bn = Bridge.bidder_num
 
-    for i in range(4):
-
-        id = (bn+i)%4
-
-        bridge  = bridges[id]
-        agent   = agents[id]
-        reward  = bridge.get_rewards()
-        bs      = bid_states[id]
-        ps      = play_states[id]
-        agent[0].train_short_memory(bs[0], bs[1], reward, bs[3], True)
-        agent[0].remember(bs[0], bs[1], reward, bs[3], True)
-
-        if i == 0:
-            cs  = call_state
-            agent[1].train_short_memory(cs[0], cs[1], reward, cs[3], True)
-            agent[1].remember(cs[0], cs[1], reward, cs[3], True)
-        
-        agent[2].train_short_memory(ps[0], ps[1], ps[2], ps[3], True)
-        agent[2].remember(ps[0], ps[1], ps[2], ps[3], True)
-    
     game_cnt += 1
 
-    if game_cnt%PRINTCYCLE == 0:
-        for agent in agents:
-            for a in agent:
-                a.train_long_memory()
-        print('Game Count:',game_cnt,'Time:',time.time()-start,'seconds\n')
-        start = time.time()
+    #print('Game',game_cnt)
+    #print('Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
+    if Bridge.bidder_sets >= 6 + Bridge.bid_number:
+        print('Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
+        bidder_win_cnt += 1
+    else:
+    #    print('Bidder lose')
+        pass
 
     bridges = [Bridge(i) for i in range(4)]
     bid_states = [None,None,None,None]
     call_state = []
     play_states = [None,None,None,None]
 
-mfp = 'model'
-if not os.path.exists(mfp):
-    os.makedirs(mfp)
-
-for i in range(4):
-    for j in range(3):
-        m = agents[i][j].model
-        t = agents[i][j].trainer
-        torch.save({
-            'epoch': game_cnt/1000,
-            'model_state_dict': m.state_dict(),
-            'optimizer_state_dict': t.optimizer.state_dict()
-        }, 'model/ozy_does_not_choke_P'+str(i)+'A'+str(j)+'.pth')
+print('bidder win rate:',bidder_win_cnt/game_cnt)

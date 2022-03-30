@@ -110,6 +110,17 @@ class Bridge:
 
         return points
 
+    def get_HCP(self):
+        points = 0
+        for t in self.cards:
+            points += max(0,t[1]-9)
+
+    def get_suit_length(self):
+        suit_counts = [0,0,0,0]
+        for t in self.cards:
+            suit_counts[t[0]-1] += 1
+
+        return suit_counts
     # Executes the action at the current phase
     def play_step(self, action=None): 
 
@@ -347,9 +358,12 @@ class Bridge:
 
         side = Bridge.bidder_lst[self.player_num]
             
-        if Bridge.bidder_sets == 6 + Bridge.bid_number: # bidder win
-            if side == 1: 
-                return 10 * 2**Bridge.bid_number # bidder side
+        if Bridge.bidder_sets >= 6 + Bridge.bid_number: # bidder win
+            if side == 1:
+                if Bridge.bidder_sets == 6 + Bridge.bid_number:
+                    return 10 * 2**Bridge.bid_number # bidder side
+                else:
+                    return 5 * 2**Bridge.bid_number # could have done better
             else: 
                 return -(10 * 2**Bridge.bid_number) # against side
         else: # against win
