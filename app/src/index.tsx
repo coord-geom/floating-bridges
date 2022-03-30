@@ -4,6 +4,9 @@ import './index.css';
 import AppRoom from './AppRoom';
 import JoinRoom from './JoinRoomScreen';
 import reportWebVitals from './reportWebVitals';
+import {io} from 'socket.io-client'
+
+const socket = io('http://localhost:3000') //the webpage which the server is hosted on
 
 ReactDOM.render(
   <React.StrictMode>

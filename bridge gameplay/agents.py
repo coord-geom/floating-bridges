@@ -81,7 +81,7 @@ class BiddingAgent(Agent):
             return self.explore(game) 
         
     def explore(self, game):
-        bids = [[0,0] for _ in range(500)]
+        bids = [[0,0] for _ in range(10)]
         for i in range(1,8):
             for j in range(1,6):
                 if game.last_number < i:

@@ -5,7 +5,7 @@ import torch
 import os
 
 NUMGAMES    = 30000
-TIMERUN     = 50000
+TIMERUN     = 80000
 PRINTCYCLE  = 1000
 
 # code has been commented because it doesn't work

@@ -167,6 +167,51 @@ export const InfoTable:FC<InfoTableProps> = (props) => {
   );
 }
 
+interface SideBarProps {
+  sendMessage: () => void
+  sendBid: () => void
+  allowBid: boolean
+  messages: string[]
+}
+
+export const SideBar:FC<SideBarProps> = (props) =>{  
+  const bidSuits = ["Club", "Diamond", "Heart", "Spade", "No Trump"]
+  const getString = (id:number)=>{
+    if (id === 0) return "Pass"
+
+    return Math.ceil(id/5) + " " + bidSuits[(id-1) % 5]
+  }
+
+  return (
+    <div className='sidebar'>
+      <div className='sidebar-message-log'>
+        {props.messages.map((val, i) => 
+          <div className={'sidebar-message-' + (i%2)}> {val} </div>
+        )}
+      </div>
+      <div className='flex-row'>
+        <input id = "message" placeholder="Message" inputMode="text" className='sidebar-text'/>
+        <button onClick={props.sendMessage} className='sidebar-button'>
+          Send Message
+        </button>
+      </div>
+      <div className='flex-row'>
+        <select id="bid" className='sidebar-dropdown'>
+          <option value={-1} disabled selected hidden>Bid</option>    
+          {[...Array(36).keys()].map((val, i) => 
+            <option value={i}>{getString(i)}</option>
+          )}
+        </select>
+        <button onClick={props.sendBid} className='sidebar-button' disabled={!props.allowBid}>
+          Sumbit Bid!
+        </button>
+      </div>
+    </div>
+  )
+}
+
+
+
 
 type cardSelected = boolean
 
@@ -336,6 +381,20 @@ function AppRoom() {
     //[...cardInitList]
   )
 
+  /** Side Bar OnClick functions.**/
+  const [canBid, setCanBid] = useState<boolean> (true) //change to false later
+
+  const [sideMessages, setSideMessages] = useState<string[]> (
+    []
+  ) 
+
+  const sendMessage = () => {
+
+  }
+
+  const sendBid = () => {
+
+  }
 
 
   /** PAGEBREAK return statement **/
@@ -362,6 +421,7 @@ function AppRoom() {
       <InfoTable setsWon={5} partner={partner === 1} breakTrump={false} trump={trump} playerPos={1} name={"My name"}/>
       <InfoTable setsWon={5} partner={partner === 2} breakTrump={false} trump={trump} playerPos={2} name={"Hello!!!"}/>
       <InfoTable setsWon={5} partner={partner === 3} breakTrump={false} trump={trump} playerPos={3} name={"is"}/>
+      <SideBar sendMessage={sendMessage} sendBid={sendBid} allowBid={canBid} messages={sideMessages}/>
     </div>
   )
 }

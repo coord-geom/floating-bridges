@@ -360,10 +360,7 @@ class Bridge:
             
         if Bridge.bidder_sets >= 6 + Bridge.bid_number: # bidder win
             if side == 1:
-                if Bridge.bidder_sets == 6 + Bridge.bid_number:
-                    return 10 * 2**Bridge.bid_number # bidder side
-                else:
-                    return 5 * 2**Bridge.bid_number # could have done better
+                return 10 * 2**Bridge.bid_number # bidder side
             else: 
                 return -(10 * 2**Bridge.bid_number) # against side
         else: # against win
