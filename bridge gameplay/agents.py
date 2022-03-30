@@ -7,7 +7,7 @@ from game import Bridge
 
 BATCH_SIZE = 1000
 MAX_MEMORY = 100000
-LR = 0.01
+LR = 0.003
 
 class Agent:
     def __init__(self):
@@ -205,4 +205,8 @@ class PlayingAgent(Agent):
             return self.explore(game)
     
     def explore(self, game):
-        return game.cards[random.randrange(len(game.cards))]
+        valid = []
+        for card in game.cards:
+            if game.valid_card_play(card):
+                valid.append(card)
+        return valid[random.randrange(len(valid))]

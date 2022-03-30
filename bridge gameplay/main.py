@@ -2,17 +2,19 @@ from agents import BiddingAgent, CallingAgent, PlayingAgent
 from game import Bridge
 import time
 import torch
+import os
 
-NUMGAMES = 30000
-PRINTCYCLE = 1000
+NUMGAMES    = 30000
+TIMERUN     = 50000
+PRINTCYCLE  = 1000
 
 # code has been commented because it doesn't work
 
-agents = [[BiddingAgent(), CallingAgent(), PlayingAgent()] for _ in range(4)]
-bridges = [Bridge(i) for i in range(4)]
+agents      = [[BiddingAgent(), CallingAgent(), PlayingAgent()] for _ in range(4)]
+bridges     = [Bridge(i) for i in range(4)]
 
-bid_states = [None,None,None,None]
-call_state = []
+bid_states  = [None,None,None,None]
+call_state  = []
 play_states = [None,None,None,None]
 
 def check_reshuffle():
@@ -27,7 +29,7 @@ true_start = time.time()
 
 start = time.time()
 
-while (time.time()-true_start < 100): # game_cnt < NUMGAMES
+while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
 
     next_player = game_cnt % 4
     old_player = next_player
@@ -181,15 +183,16 @@ while (time.time()-true_start < 100): # game_cnt < NUMGAMES
     call_state = []
     play_states = [None,None,None,None]
 
-agents[0][0].model.save('Bid1.pth')
-agents[0][1].model.save('Call1.pth')
-agents[0][2].model.save('Play1.pth')
-agents[1][0].model.save('Bid2.pth')
-agents[1][1].model.save('Call2.pth')
-agents[1][2].model.save('Play2.pth')
-agents[2][0].model.save('Bid3.pth')
-agents[2][1].model.save('Call3.pth')
-agents[2][2].model.save('Play3.pth')
-agents[3][0].model.save('Bid4.pth')
-agents[3][1].model.save('Call4.pth')
-agents[3][2].model.save('Play4.pth')
+mfp = 'model'
+if not os.path.exists(mfp):
+    os.makedirs(mfp)
+
+for i in range(4):
+    for j in range(3):
+        m = agents[i][j].model
+        t = agents[i][j].trainer
+        torch.save({
+            'epoch': game_cnt/100,
+            'model_state_dict': m.state_dict(),
+            'optimizer_state_dict': t.optimizer.state_dict()
+        }, 'model/P'+str(i)+'A'+str(j)+'.pth')

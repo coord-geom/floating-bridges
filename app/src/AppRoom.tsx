@@ -171,7 +171,7 @@ export const InfoTable:FC<InfoTableProps> = (props) => {
 type cardSelected = boolean
 
 /* I know that this is very bad coding practice, but bear with me here. All the functions that have to do with 
- * the gameplay of the app will be situated here. To toggle between sections, just search the word `PAGEBREAK`*/
+ * the main game be situated here. To toggle between sections, just search the word `PAGEBREAK`*/
 function AppRoom() {
   /** PAGEBREAK Functions that have to do with initializing the players cards **/
   var playerNum = 1 //TODO should be const: init when establishing multiplayer
@@ -194,6 +194,7 @@ function AppRoom() {
     return array;
   }
 
+  // TODO: ensure 4 points reshuffle
   const genCards = () => {
     console.log("generating cards!")
     var allCards = Array.from(Array(52).keys())
