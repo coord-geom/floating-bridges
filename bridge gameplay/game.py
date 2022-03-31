@@ -91,6 +91,8 @@ class Bridge:
         self.bidder_side = False
         self.sets_won = 0
 
+    
+
     # This function checks if a card hand has 4 or less points, which means it is a reshuffle
     def check_reshuffle(self):
         return self.get_card_points() <= 4
@@ -134,7 +136,7 @@ class Bridge:
 
             self.bid(action)
 
-            return 10, False, (self.player_num+1)%4
+            return 0, False, (self.player_num+1)%4
 
         # This is the partner calling phase
         elif x == Bridge.CALL_PHASE:
@@ -150,7 +152,7 @@ class Bridge:
                 return ILLEGAL_PENALTY, False, self.player_num
 
             Bridge.partner_card = action
-            return 10, False, Bridge.next_starter
+            return 0, False, Bridge.next_starter
 
         # This is the card playing phase
         elif Bridge.current_phase == Bridge.PLAY_PHASE: # play the card
@@ -161,9 +163,9 @@ class Bridge:
             self.play(action)
 
             if len(Bridge.past_cards) == 0:
-                return 10, False, Bridge.next_starter # begin new round
+                return 0, False, Bridge.next_starter # begin new round
             else:
-                return 10, False, (self.player_num+1)%4 # let the next person play
+                return 0, False, (self.player_num+1)%4 # let the next person play
 
         return
 
@@ -353,18 +355,21 @@ class Bridge:
         elif (self.player_num+1)%4 == Bridge.next_starter: 
             Bridge.next_starter = self.largest_card(Bridge.past_cards)
             Bridge.past_cards = []
-        
+
     def get_rewards(self):
 
         side = Bridge.bidder_lst[self.player_num]
+
+        bid_win = [20,34,57,96.25,168+2/3,325,819] # net zero sum
+        non_bid_win = [13,55/6,6,3.5,5/3,0.5,0]
             
         if Bridge.bidder_sets >= 6 + Bridge.bid_number: # bidder win
             if side == 1:
-                return 10 * 2**Bridge.bid_number # bidder side
+                return bid_win[Bridge.bid_number-1] # bidder side
             else: 
-                return -(10 * 2**Bridge.bid_number) # against side
+                return -Bridge.against_sets**2 # against side
         else: # against win
             if side == 0: 
-                return 10 * 2**(Bridge.bid_number-1) # against side
+                return non_bid_win[Bridge.bid_number-1] # against side
             else: 
-                return -10 * 2**(Bridge.bid_number-1) # bidder side
+                return -(6+Bridge.bid_number-Bridge.bidder_sets)**2 # bidder side

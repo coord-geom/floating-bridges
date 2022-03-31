@@ -1,3 +1,4 @@
+from ast import Call
 import torch
 import numpy as np
 import random
@@ -7,13 +8,13 @@ from game import Bridge
 
 BATCH_SIZE = 1000
 MAX_MEMORY = 100000
-LR = 0.003
+LR = 0.001
 
 class Agent:
     def __init__(self):
         self.epsilon = 1
-        self.eps_min = 0.00001
-        self.eps_dec = 0.00001
+        self.eps_min = 0.0001
+        self.eps_dec = 0.0001
         self.gamma   = 0.9
         self.memory  = deque(maxlen=MAX_MEMORY)
 
@@ -47,7 +48,7 @@ class BiddingAgent(Agent):
 
     def __init__(self):
         super().__init__()
-        self.model   = Linear_QNet(43,51,36)
+        self.model   = Linear_QNet(43,65,65,36)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
     
     def get_state(self, game):
@@ -79,15 +80,17 @@ class BiddingAgent(Agent):
         else:
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
             return self.explore(game) 
-        
+
     def explore(self, game):
-        bids = [[0,0] for _ in range(10)]
-        for i in range(1,8):
-            for j in range(1,6):
-                if game.last_number < i:
-                    bids.append([i,j])
-                elif game.last_number == i and game.last_suit < j:
-                    bids.append([i,j])
+        id = 0
+        if game.last_number > 0:
+            id = game.last_suit + (game.last_number-1) * 5
+
+        bids = [[0,0] for _ in range(4)]
+        for i in range(4):
+            if id+i+1 >= 36: break
+            bids.append(CallingAgent.OUTPUT_MAP[id+i+1])
+
         return bids[random.randrange(len(bids))]
     
     def load_state(self, checkpoint):
@@ -96,15 +99,15 @@ class BiddingAgent(Agent):
 
 class CallingAgent(Agent):
     OUTPUT_MAP = [
-                    [1, 10], [1, 11], [1, 12], [1, 13], 
-                    [2, 10], [2, 11], [2, 12], [2, 13],
-                    [3, 10], [3, 11], [3, 12], [3, 13],
-                    [4, 10], [4, 11], [4, 12], [4, 13]
-                                                        ]
+                    [1, 11], [1, 12], [1, 13], 
+                    [2, 11], [2, 12], [2, 13],
+                    [3, 11], [3, 12], [3, 13],
+                    [4, 11], [4, 12], [4, 13]
+                                                ]
 
     def __init__(self):
         super().__init__()
-        self.model   = Linear_QNet(43,39,16)
+        self.model   = Linear_QNet(42,41,41,12)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
     
     def get_state(self, game):
@@ -119,7 +122,7 @@ class CallingAgent(Agent):
             id = (game.player_num+i)%4
             state.extend(suits_bid[id])
         
-        state.extend([Bridge.last_number, Bridge.last_suit])
+        state.append(Bridge.last_suit)
 
         return state
 
@@ -152,7 +155,7 @@ class PlayingAgent(Agent):
 
     def __init__(self):
         super().__init__()
-        self.model   = Linear_QNet(103,42,13)
+        self.model   = Linear_QNet(104,82,82,13)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
     
     def get_state(self, game):
@@ -169,7 +172,9 @@ class PlayingAgent(Agent):
             id = (game.player_num+i)%4
             state.extend(suits_bid[id])
         
-        state.extend([Bridge.last_number, Bridge.last_suit])
+        state.append(Bridge.last_suit)
+
+        state.extend(game.partner_card)
 
         # partner
         if game.bidder_side: state.append(1)

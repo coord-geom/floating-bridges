@@ -7,12 +7,17 @@ bridges     = [Bridge(i) for i in range(4)]
 
 for i in range(4):
     for j in range(3):
-        checkpoint = torch.load('model/P'+str(3)+'A'+str(j)+'.pth')
+        checkpoint = torch.load('model/ozy_does_not_choke_P'+str(i)+'A'+str(j)+'.pth')
         agents[i][j].load_state(checkpoint)
 
-bid_states  = [None,None,None,None]
-call_state  = []
-play_states = [None,None,None,None]
+bids = {}
+tot = {}
+
+for i in range(1,8):
+    for j in range(1,6):
+        bids[(i,j)] = 0
+        tot[(i,j)] = 0
+
 
 def check_reshuffle():
     for bridge in bridges:
@@ -23,7 +28,7 @@ def check_reshuffle():
 game_cnt = 0
 bidder_win_cnt = 0
 
-while game_cnt<1000: # game_cnt < NUMGAMES
+while game_cnt<100000: # game_cnt < NUMGAMES
 
     next_player = game_cnt % 4
     old_player = next_player
@@ -49,22 +54,16 @@ while game_cnt<1000: # game_cnt < NUMGAMES
         state   = agent[0].get_state(bridge)
 
         move = None
-        if repeat_cnt == 20:
+        if repeat_cnt == 1:
             repeat_cnt = 0
             move = agent[0].explore(bridge)
         else:
             move = agent[0].get_action(state, bridge)
         
         reward, done, next_player = bridge.play_step(move)
-        #state_n = agent[0].get_state(bridge)
-
-        #bid_states[id] = [state, move, reward, state_n, done]
 
         if old_player == next_player:
            repeat_cnt += 1
-
-        #agent[0].train_short_memory(state, move, reward, state_n, done)
-        #agent[0].remember(state, move, reward, state_n, done)
 
     # If everyone passes, start a new game
     if Bridge.all_passed:
@@ -88,22 +87,17 @@ while game_cnt<1000: # game_cnt < NUMGAMES
         state   = agent[1].get_state(bridge)
         
         move = None
-        if repeat_cnt == 20:
+        if repeat_cnt == 1:
             repeat_cnt = 0
             move = agent[1].explore(bridge)
         else:
             move = agent[1].get_action(state, bridge)
 
         reward, done, next_player = bridge.play_step(move)
-        #state_n = agent[1].get_state(bridge)
-
-        #call_state = [state, move, reward, state_n, done]
 
         if old_player == next_player:
             repeat_cnt += 1
 
-        #agent[1].train_short_memory(state, move, reward, state_n, done)
-        #agent[1].remember(state, move, reward, state_n, done)
 
     # For other players to check if they are the partner
     bridges[(Bridge.bidder_num + 1)%4].play_step()
@@ -123,35 +117,31 @@ while game_cnt<1000: # game_cnt < NUMGAMES
         state   = agent[2].get_state(bridge)
         
         move = None
-        if repeat_cnt == 20:
+        if repeat_cnt == 1:
             repeat_cnt = 0
             move = agent[2].explore(bridge)
         else:
             move = agent[2].get_action(state, bridge)
         
         reward, done, next_player = bridge.play_step(move)
-        #state_n = agent[2].get_state(bridge)
-        
-        #play_states[id] = [state, move, reward, state_n, done]
 
         if old_player == next_player:
             repeat_cnt += 1
-
-        #agent[2].train_short_memory(state, move, reward, state_n, done)
-        #agent[2].remember(state, move, reward, state_n, done)
     
     # Delegate rewards to agents
     bn = Bridge.bidder_num
 
     game_cnt += 1
-
+    tot[(Bridge.bid_number,Bridge.bid_suit)] += 1
     #print('Game',game_cnt)
     #print('Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
     if Bridge.bidder_sets >= 6 + Bridge.bid_number:
-        print('Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
+        #print('Win Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
         bidder_win_cnt += 1
+        bids[(Bridge.bid_number,Bridge.bid_suit)] += 1
     else:
     #    print('Bidder lose')
+        #print('Lose Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
         pass
 
     bridges = [Bridge(i) for i in range(4)]
@@ -160,3 +150,17 @@ while game_cnt<1000: # game_cnt < NUMGAMES
     play_states = [None,None,None,None]
 
 print('bidder win rate:',bidder_win_cnt/game_cnt)
+print(bids)
+print(tot)
+
+
+prop = {}
+
+for i in range(1,8):
+    for j in range(1,6):
+        if tot[(i,j)] != 0:
+            prop[(i,j)] = bids[(i,j)]/tot[(i,j)]
+        else:
+            prop[(i,j)] = 'NIL'
+
+print(prop)
