@@ -6,15 +6,15 @@ from model import Linear_QNet, QTrainer
 from collections import deque
 from game import Bridge
 
-BATCH_SIZE = 1000
+BATCH_SIZE = 2500
 MAX_MEMORY = 100000
 LR = 0.001
 
 class Agent:
     def __init__(self):
         self.epsilon = 1
-        self.eps_min = 0.0001
-        self.eps_dec = 0.0001
+        self.eps_min = 0.00001
+        self.eps_dec = 0.00001
         self.gamma   = 0.9
         self.memory  = deque(maxlen=MAX_MEMORY)
 
@@ -88,8 +88,10 @@ class BiddingAgent(Agent):
 
         bids = [[0,0] for _ in range(4)]
         for i in range(4):
-            if id+i+1 >= 36: break
-            bids.append(CallingAgent.OUTPUT_MAP[id+i+1])
+            if id+i+1 >= len(CallingAgent.OUTPUT_MAP): 
+                break
+            else: 
+                bids.append(CallingAgent.OUTPUT_MAP[id+i+1])
 
         return bids[random.randrange(len(bids))]
     

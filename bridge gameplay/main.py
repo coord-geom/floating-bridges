@@ -5,7 +5,7 @@ import torch
 import os
 
 NUMGAMES    = 30000
-TIMERUN     = 100
+TIMERUN     = 1000
 PRINTCYCLE  = 1000
 
 # code has been commented because it doesn't work
@@ -84,8 +84,8 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
 
     # Run until the bidder makes a valid call
     repeat_cnt = 0
-    reward=0
-    while reward != 10:
+    reward=12345
+    while reward != 0:
         bridge  = bridges[next_player]
         old_player = next_player
 
