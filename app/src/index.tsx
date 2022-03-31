@@ -10,7 +10,7 @@ const socket = io('http://localhost:3000') //the webpage which the server is hos
 
 ReactDOM.render(
   <React.StrictMode>
-    <AppRoom />
+    <JoinRoom />
   </React.StrictMode>,
   document.getElementById('root')
 );

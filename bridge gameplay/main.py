@@ -5,8 +5,8 @@ import torch
 import os
 
 NUMGAMES    = 30000
-TIMERUN     = 100
-PRINTCYCLE  = 100
+TIMERUN     = 150000
+PRINTCYCLE  = 1000
 
 # code has been commented because it doesn't work
 

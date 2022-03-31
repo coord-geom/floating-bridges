@@ -245,17 +245,48 @@ function AppRoom() {
 
   // TODO: ensure 4 points reshuffle
   const genCards = () => {
+    const getPoints = (cards: number[]) => {
+      var numPoints = 0
+      var suitCounts = [0,0,0,0]
+      for (var i = 0; i < cards.length; ++i){
+        suitCounts[Math.floor(cards[i]/13)] += 1
+        //J to A points
+        numPoints += Math.max((cards[i])%13-8, 0)
+      }
+
+      // Suit Points
+      for (var i = 0; i < suitCounts.length; ++i){
+        numPoints += Math.max((suitCounts[i])-4, 0)
+      }
+      return numPoints
+    }
+
     console.log("generating cards!")
     var allCards = Array.from(Array(52).keys())
-    allCards = shuffle(allCards)
     var cardList1 = allCards.slice(0,13)
     var cardList2 = allCards.slice(13,26)
     var cardList3 = allCards.slice(26,39)
     var cardList4 = allCards.slice(39,52)
-    cardList1 = cardList1.sort((a, b) => a - b)
-    cardList2 = cardList2.sort((a, b) => a - b)
-    cardList3 = cardList3.sort((a, b) => a - b)
-    cardList4 = cardList4.sort((a, b) => a - b)
+    var noReshuffle = false
+    while (!noReshuffle){
+      noReshuffle = true
+      allCards = shuffle(allCards)
+
+      cardList1 = allCards.slice(0,13)
+      cardList2 = allCards.slice(13,26)
+      cardList3 = allCards.slice(26,39)
+      cardList4 = allCards.slice(39,52)
+
+      cardList1 = cardList1.sort((a, b) => a - b)
+      cardList2 = cardList2.sort((a, b) => a - b)
+      cardList3 = cardList3.sort((a, b) => a - b)
+      cardList4 = cardList4.sort((a, b) => a - b)
+
+      if (getPoints(cardList1) < 5) noReshuffle = false
+      if (getPoints(cardList2) < 5) noReshuffle = false
+      if (getPoints(cardList3) < 5) noReshuffle = false
+      if (getPoints(cardList4) < 5) noReshuffle = false
+    } 
 
     /*console.log(cardList1)
     console.log(cardList2)
