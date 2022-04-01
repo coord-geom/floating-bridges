@@ -5,7 +5,7 @@ import torch
 import os
 
 NUMGAMES    = 30000
-TIMERUN     = 150000
+TIMERUN     = 80000
 PRINTCYCLE  = 1000
 
 # code has been commented because it doesn't work
@@ -84,7 +84,7 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
 
     # Run until the bidder makes a valid call
     repeat_cnt = 0
-    reward=12345
+    reward=None
     while reward != 0:
         bridge  = bridges[next_player]
         old_player = next_player
@@ -155,10 +155,10 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
 
     for i in range(4):
 
-        bridge  = bridges[id]
+        bridge  = bridges[i]
         reward  = bridge.get_rewards()
-        bs      = bid_states[id]
-        ps      = play_states[id]
+        bs      = bid_states[i]
+        ps      = play_states[i]
         
         agents[0].train_short_memory(bs[0], bs[1], reward, bs[3], True)
         agents[0].remember(bs[0], bs[1], reward, bs[3], True)

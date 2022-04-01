@@ -1,4 +1,3 @@
-from ast import Call
 import torch
 import numpy as np
 import random
@@ -13,8 +12,8 @@ LR = 0.001
 class Agent:
     def __init__(self):
         self.epsilon = 1
-        self.eps_min = 0.00001
-        self.eps_dec = 0.00001
+        self.eps_min = 0.01
+        self.eps_dec = 0.00005
         self.gamma   = 0.9
         self.memory  = deque(maxlen=MAX_MEMORY)
 
@@ -88,10 +87,10 @@ class BiddingAgent(Agent):
 
         bids = [[0,0] for _ in range(4)]
         for i in range(4):
-            if id+i+1 >= len(CallingAgent.OUTPUT_MAP): 
+            if id+i+1 >= len(BiddingAgent.OUTPUT_MAP): 
                 break
             else: 
-                bids.append(CallingAgent.OUTPUT_MAP[id+i+1])
+                bids.append(BiddingAgent.OUTPUT_MAP[id+i+1])
 
         return bids[random.randrange(len(bids))]
     
