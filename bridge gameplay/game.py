@@ -365,11 +365,11 @@ class Bridge:
             
         if Bridge.bidder_sets >= 6 + Bridge.bid_number: # bidder win
             if side == 1:
-                return bid_win[Bridge.bid_number-1] # bidder side
+                return bid_win[Bridge.bid_number-1] # bidder side win
             else: 
-                return -Bridge.against_sets**2 # against side
+                return -Bridge.against_sets**2 # against side lose
         else: # against win
             if side == 0: 
-                return non_bid_win[Bridge.bid_number-1] # against side
+                return non_bid_win[Bridge.bid_number-1] # against side win
             else: 
-                return -(6+Bridge.bid_number-Bridge.bidder_sets)**2 # bidder side
+                return -(6+Bridge.bid_number-Bridge.bidder_sets)**2 # bidder side lose

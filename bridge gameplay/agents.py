@@ -1,4 +1,3 @@
-from ast import Call
 import torch
 import numpy as np
 import random
@@ -13,8 +12,8 @@ LR = 0.001
 class Agent:
     def __init__(self):
         self.epsilon = 1
-        self.eps_min = 0.00001
-        self.eps_dec = 0.00001
+        self.eps_min = 0.01
+        self.eps_dec = 0.00005
         self.gamma   = 0.9
         self.memory  = deque(maxlen=MAX_MEMORY)
 
