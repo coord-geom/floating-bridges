@@ -88,10 +88,10 @@ class BiddingAgent(Agent):
 
         bids = [[0,0] for _ in range(4)]
         for i in range(4):
-            if id+i+1 >= len(CallingAgent.OUTPUT_MAP): 
+            if id+i+1 >= len(BiddingAgent.OUTPUT_MAP): 
                 break
             else: 
-                bids.append(CallingAgent.OUTPUT_MAP[id+i+1])
+                bids.append(BiddingAgent.OUTPUT_MAP[id+i+1])
 
         return bids[random.randrange(len(bids))]
     
