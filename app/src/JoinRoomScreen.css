@@ -13,6 +13,18 @@
   }
 }
 
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+  color: rgb(95, 95, 95);
+  opacity: 1; /* Firefox */
+}
+
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+  color: rgb(95, 95, 95);
+}
+
+::-ms-input-placeholder { /* Microsoft Edge */
+  color: rgb(95, 95, 95);
+}
 
 .App-header {
   background-color: #282c34;
@@ -45,8 +57,9 @@
 
 .flex-row {
   display: flex;
+  padding-left: 5vw;
   justify-content: center;
-  width: 100%;
+  width: 95vw;
 }
 
 .flex-main {
@@ -73,13 +86,13 @@
   margin: 1%;
   width: 25%;
   background-color: rgba(109, 223, 115, 0.5);
-  color: aliceblue;
+  color: rgb(0, 0, 0);
 }
 
 .text-p{
   font: 40px "Century Gothic", Futura, sans-serif;
   margin: 1%;
-  width: 15%;
+  width: 20%;
   padding: 0.5%;
   background-color: rgba(109, 223, 115, 0.5);
 }
