@@ -1,4 +1,4 @@
-from agents import BiddingAgent, CallingAgent, PlayingAgent
+from agents2 import BiddingAgent, PlayingAgent
 from game import Bridge
 import time
 import torch
@@ -6,15 +6,12 @@ import os
 
 NUMGAMES    = 30000
 TIMERUN     = 80000
-PRINTCYCLE  = 100
+PRINTCYCLE  = 1000
 
-# code has been commented because it doesn't work
-
-agents      = [BiddingAgent(), CallingAgent(), PlayingAgent()]
+agents      = [BiddingAgent(), PlayingAgent()]
 bridges     = [Bridge(i) for i in range(4)]
 
 bid_states  = [None,None,None,None]
-call_state  = []
 play_states = [None,None,None,None]
 
 def check_reshuffle():
@@ -29,17 +26,16 @@ true_start = time.time()
 
 start = time.time()
 
+repeat_cnt = 0
+
 while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
 
-    next_player = game_cnt % 4
-    old_player = next_player
-    repeat_cnt = 0
+    next_player = 0
 
     # If any of the players can reshuffle, start a new game
     if check_reshuffle():
         bridges = [Bridge(i) for i in range(4)]
         bid_states = [None,None,None,None]
-        call_state = []
         play_states = [None,None,None,None]
         continue
 
@@ -54,7 +50,7 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
         state   = agents[0].get_state(bridge)
 
         move = None
-        if repeat_cnt == 10:
+        if repeat_cnt == 5:
             repeat_cnt = 0
             move = agents[0].explore(bridge)
         else:
@@ -63,10 +59,12 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
         reward, done, next_player = bridge.play_step(move)
         state_n = agents[0].get_state(bridge)
 
-        bid_states[id] = [state, move, reward, state_n, done]
-
         if old_player == next_player:
             repeat_cnt += 1
+        else:
+            repeat_cnt = 0
+
+        bid_states[id] = [state, move, reward, state_n, done]
 
         agents[0].train_short_memory(state, move, reward, state_n, done)
         agents[0].remember(state, move, reward, state_n, done)
@@ -75,39 +73,27 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
     if Bridge.all_passed:
         bridges = [Bridge(i) for i in range(4)]
         bid_states = [None,None,None,None]
-        call_state = []
         play_states = [None,None,None,None]
         continue
 
 
     # Partner calling phase
 
-    # Run until the bidder makes a valid call
-    repeat_cnt = 0
-    reward=None
-    while reward != 0:
-        bridge  = bridges[next_player]
-        old_player = next_player
+    x = Bridge.last_suit
+    b = Bridge.bidder_num
+    c = bridges[b].cards
+    
 
-        state   = agents[1].get_state(bridge)
-        
-        move = None
-        if repeat_cnt == 10:
-            repeat_cnt = 0
-            move = agents[1].explore(bridge)
+    if x < 5:
+        if [x,13] not in c: reward, done, next_player = bridges[b].play_step([x,13])
+        elif [x,12] not in c: reward, done, next_player = bridges[b].play_step([x,12])
+        elif [x,11] not in c: reward, done, next_player = bridges[b].play_step([x,11])
         else:
-            move = agents[1].get_action(state, bridge)
-
-        reward, done, next_player = bridge.play_step(move)
-        state_n = agents[1].get_state(bridge)
-
-        call_state = [state, move, reward, state_n, done]
-
-        if old_player == next_player:
-            repeat_cnt += 1
-
-        agents[1].train_short_memory(state, move, reward, state_n, done)
-        agents[1].remember(state, move, reward, state_n, done)
+            for card in ([4,13],[3,13],[2,13],[1,13],[4,12],[3,12],[2,12],[1,12],[4,11],[3,11],[2,11],[1,11]):
+                if card not in c: reward, done, next_player = bridges[b].play_step(card)
+    else:
+        for card in ([4,13],[3,13],[2,13],[1,13],[4,12],[3,12],[2,12],[1,12],[4,11],[3,11],[2,11],[1,11]):
+            if card not in c: reward, done, next_player = bridges[b].play_step(card)
 
     # For other players to check if they are the partner
     bridges[(Bridge.bidder_num + 1)%4].play_step()
@@ -117,38 +103,39 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
 
     # Execute the card playing phase
     repeat_cnt = 0
-
     while Bridge.current_phase == Bridge.PLAY_PHASE:
         bridge  = bridges[next_player]
         id      = next_player
         old_player = next_player
 
-        state   = agents[2].get_state(bridge)
+        state   = agents[1].get_state(bridge)
         
         move = None
-        if repeat_cnt == 10:
+        if repeat_cnt == 5:
             repeat_cnt = 0
-            move = agents[2].explore(bridge)
+            move = agents[1].explore(bridge)
         else:
-            move = agents[2].get_action(state, bridge)
+            move = agents[1].get_action(state, bridge)
         
         reward, done, next_player = bridge.play_step(move)
-        state_n = agents[2].get_state(bridge)
-        
-        play_states[id] = [state, move, reward, state_n, done]
+        state_n = agents[1].get_state(bridge)
 
         if old_player == next_player:
             repeat_cnt += 1
+        else:
+            repeat_cnt = 0
+        
+        play_states[id] = [state, move, reward, state_n, done]
 
         if state != state_n and len(Bridge.past_cards) == 0: # if the round ends, reward the winner
             ps = play_states[Bridge.next_starter]
             play_states[Bridge.next_starter][2] = 10
             ps[2] = 10
-            agents[2].train_short_memory(ps[0], ps[1], ps[2], ps[3], ps[4])
-            agents[2].remember(ps[0], ps[1], ps[2], ps[3], ps[4])
+            agents[1].train_short_memory(ps[0], ps[1], ps[2], ps[3], ps[4])
+            agents[1].remember(ps[0], ps[1], ps[2], ps[3], ps[4])
         else:
-            agents[2].train_short_memory(state, move, reward, state_n, done)
-            agents[2].remember(state, move, reward, state_n, done)
+            agents[1].train_short_memory(state, move, reward, state_n, done)
+            agents[1].remember(state, move, reward, state_n, done)
     
     # Delegate rewards to agents
     bn = Bridge.bidder_num
@@ -162,20 +149,13 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
         
         agents[0].train_short_memory(bs[0], bs[1], reward, bs[3], True)
         agents[0].remember(bs[0], bs[1], reward, bs[3], True)
-
-        if i == Bridge.bidder_num:
-            cs  = call_state
-            if reward > 0:
-                agents[1].train_short_memory(cs[0], cs[1], 10, cs[3], True)
-                agents[1].remember(cs[0], cs[1], 10, cs[3], True)
-            else:
-                agents[1].train_short_memory(cs[0], cs[1], -10, cs[3], True)
-                agents[1].remember(cs[0], cs[1], -10, cs[3], True)
         
-        agents[2].train_short_memory(ps[0], ps[1], ps[2], ps[3], True)
-        agents[2].remember(ps[0], ps[1], ps[2], ps[3], True)
+        agents[1].train_short_memory(ps[0], ps[1], ps[2], ps[3], True)
+        agents[1].remember(ps[0], ps[1], ps[2], ps[3], True)
     
     game_cnt += 1
+
+    print(game_cnt)
 
     if game_cnt%PRINTCYCLE == 0:
         for agent in agents:
@@ -185,18 +165,16 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
 
     bridges = [Bridge(i) for i in range(4)]
     bid_states = [None,None,None,None]
-    call_state = []
     play_states = [None,None,None,None]
 
 mfp = 'model'
 if not os.path.exists(mfp):
     os.makedirs(mfp)
 
-for i in range(3):
+for i in range(2):
     m = agents[i].model
     t = agents[i].trainer
     torch.save({
-        'epoch': game_cnt/1000,
         'model_state_dict': m.state_dict(),
         'optimizer_state_dict': t.optimizer.state_dict()
-    }, 'model/AprilFoolsModel_Agent'+str(i)+'.pth')
+    }, 'model/LastChance_Agent'+str(i)+'.pth')

@@ -1,13 +1,9 @@
-import torch
-from agents import BiddingAgent, CallingAgent, PlayingAgent
+import random
+from agents2 import BiddingAgent,  PlayingAgent
 from game import Bridge
 
-agents      = [BiddingAgent(), CallingAgent(), PlayingAgent()]
+agents      = [BiddingAgent(), PlayingAgent()]
 bridges     = [Bridge(i) for i in range(4)]
-
-for i in range(3):
-    checkpoint = torch.load('model/AprilFoolsModel_Agent'+str(i)+'.pth')
-    agents[i].load_state(checkpoint)
 
 bids = {}
 tot = {}
@@ -55,12 +51,7 @@ while game_cnt<10000: # game_cnt < NUMGAMES
 
         state   = agents[0].get_state(bridge)
 
-        move = None
-        if repeat_cnt == 1:
-            repeat_cnt = 0
-            move = agents[0].explore(bridge)
-        else:
-            move = agents[0].get_action(state, bridge)
+        move = agents[0].explore(bridge)
 
         if printing: print(next_player,move)
         
@@ -92,36 +83,36 @@ while game_cnt<10000: # game_cnt < NUMGAMES
 
     # Partner calling phase
 
-    # Run until the bidder makes a valid call
-    repeat_cnt = 0
-    reward=12345
-    while reward != 0:
-        bridge  = bridges[next_player]
-        old_player = next_player
-
-        state   = agents[1].get_state(bridge)
-        
-        move = None
-        if repeat_cnt == 1:
-            repeat_cnt = 0
-            move = agents[1].explore(bridge)
+    x = Bridge.last_suit
+    b = Bridge.bidder_num
+    c = bridges[b].cards
+    
+    '''
+    if x < 5:
+        if [x,13] not in c: reward, done, next_player = bridges[b].play_step([x,13])
+        elif [x,12] not in c: reward, done, next_player = bridges[b].play_step([x,12])
+        elif [x,11] not in c: reward, done, next_player = bridges[b].play_step([x,11])
         else:
-            move = agents[1].get_action(state, bridge)
+            for card in ([4,13],[3,13],[2,13],[1,13],[4,12],[3,12],[2,12],[1,12],[4,11],[3,11],[2,11],[1,11]):
+                if card not in c: reward, done, next_player = bridges[b].play_step(card)
+    else:
+        for card in ([4,13],[3,13],[2,13],[1,13],[4,12],[3,12],[2,12],[1,12],[4,11],[3,11],[2,11],[1,11]):
+            if card not in c: reward, done, next_player = bridges[b].play_step(card)
+    '''
 
-        reward, done, next_player = bridge.play_step(move)
+    callable_cards = []
+    for i in range(1,5):
+        for j in range(1,14):
+            if [i,j] not in c: callable_cards.append([i,j])
 
-        if old_player == next_player:
-            repeat_cnt += 1
+    reward, done, next_player = bridges[b].play_step(callable_cards[random.randrange(39)])
 
-
-    if printing:
-        print('Partner card:')
-        print(Bridge.partner_card)
 
     # For other players to check if they are the partner
     bridges[(Bridge.bidder_num + 1)%4].play_step()
     bridges[(Bridge.bidder_num + 2)%4].play_step()
     bridges[(Bridge.bidder_num + 3)%4].play_step()
+
 
 
     # Execute the card playing phase
@@ -137,14 +128,9 @@ while game_cnt<10000: # game_cnt < NUMGAMES
         id      = next_player
         old_player = next_player
 
-        state   = agents[2].get_state(bridge)
+        state   = agents[1].get_state(bridge)
         
-        move = None
-        if repeat_cnt == 1:
-            repeat_cnt = 0
-            move = agents[2].explore(bridge)
-        else:
-            move = agents[2].get_action(state, bridge)
+        move = agents[1].explore(bridge)
 
         if printing: 
             if Bridge.bidder_num == next_player:
@@ -176,7 +162,7 @@ while game_cnt<10000: # game_cnt < NUMGAMES
         #print('Lose Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
         pass
 
-    if game_cnt%100 == 0:
+    if game_cnt%1000 == 0:
         print(game_cnt/100,'% done')
 
     bridges = [Bridge(i) for i in range(4)]
