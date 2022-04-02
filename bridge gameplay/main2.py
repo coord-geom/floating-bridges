@@ -155,7 +155,7 @@ while (time.time()-true_start < TIMERUN): # game_cnt < NUMGAMES
     
     game_cnt += 1
 
-    print(game_cnt)
+    #print(game_cnt)
 
     if game_cnt%PRINTCYCLE == 0:
         for agent in agents:

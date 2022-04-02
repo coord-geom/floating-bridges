@@ -55,7 +55,7 @@
   font: 20px "Century Gothic", Futura, sans-serif;
 }
 
-.flex-row {
+.flex-row-join {
   display: flex;
   padding-left: 5vw;
   justify-content: center;

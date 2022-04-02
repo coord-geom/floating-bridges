@@ -9,7 +9,7 @@ import { createRef } from 'react';
 import { InputType } from 'zlib';
 
 interface JoinRoomProps{
-  setInfor: (room: String, name:String, id:number) => void;
+  setInfor: (room: string, name:string, id:number) => void;
 }
 
 const JoinRoom:FC<JoinRoomProps> = (props) => {  
@@ -61,11 +61,11 @@ const JoinRoom:FC<JoinRoomProps> = (props) => {
   return (
     <div className='all-div'>
       <div className="flex-main">
-        <div className='flex-row'>
+        <div className='flex-row-join'>
           <p className='text-p'>Room Code:</p>
           <input id = "roomCode" ref = {roomCodeRef} placeholder="XYZW" inputMode="text" className='text-input' />
         </div>
-        <div className='flex-row'>
+        <div className='flex-row-join'>
           <p className='text-p'>Name:</p>
           <input id = "name" ref = {nameRef} placeholder="amogus" inputMode="text" className='text-input'/>
         </div>

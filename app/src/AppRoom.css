@@ -88,8 +88,7 @@
   justify-content: center;
   max-width: 18vw;
   width: 18vw;
-  margin-right: 5vw;
-  background-color: rgba(109, 223, 115, 0.5);
+  /*margin-right: 5vw;*/
 }
 
 .sidebar-title{
@@ -170,6 +169,7 @@
   align-items: center;
   position: absolute;
   background-color: rgb(197, 215, 255);
+  padding-bottom: 1vh;
 }
 
 /* https://stackoverflow.com/questions/43919067/make-flex-items-overlap does not work*/

@@ -1,8 +1,9 @@
 import logo from './logo.svg';
 import cards from './cards.gif';
 import './AppRoom.css';
-import React, { FC, useState } from "react"
+import React, { createRef, FC, useEffect, useState } from "react"
 import ReactDOM from "react-dom"
+import { socket } from '.';
 
 const suits = ["clubs", "diamonds", "hearts", "spades"]
 const numbers = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace']
@@ -170,9 +171,13 @@ export const InfoTable:FC<InfoTableProps> = (props) => {
 interface SideBarProps {
   sendMessage: () => void
   sendBid: () => void
+  startGame: () => void
+  startGameBool: boolean
   allowBid: boolean
   messages: string[]
   roomCode:string
+  messageRef: React.RefObject<HTMLInputElement>
+  bidRef: React.RefObject<HTMLSelectElement>
 }
 
 export const SideBar:FC<SideBarProps> = (props) =>{  
@@ -194,13 +199,13 @@ export const SideBar:FC<SideBarProps> = (props) =>{
         )}
       </div>
       <div className='flex-row'>
-        <input id = "message" placeholder="Message" inputMode="text" className='sidebar-text'/>
+        <input id = "message" placeholder="Message" inputMode="text" className='sidebar-text' ref={props.messageRef}/>
         <button onClick={props.sendMessage} className='sidebar-button'>
           Send!
         </button>
       </div>
       <div className='flex-row'>
-        <select id="bid" className='sidebar-dropdown'>
+        <select id="bid" className='sidebar-dropdown' ref={props.bidRef}>
           <option value={-1} disabled selected hidden>Bid</option>    
           {[...Array(36).keys()].map((val, i) => 
             <option value={i}>{getString(i)}</option>
@@ -210,6 +215,9 @@ export const SideBar:FC<SideBarProps> = (props) =>{
           Sumbit Bid!
         </button>
       </div>
+      <button onClick={props.startGame} className='sidebar-button' disabled={!props.startGameBool}>
+        Start Game!
+      </button>
     </div>
   )
 }
@@ -219,11 +227,20 @@ export const SideBar:FC<SideBarProps> = (props) =>{
 
 type cardSelected = boolean
 
+interface AppRoomProps{
+  roomCode: string;
+  name: string;
+  id: number;
+  sideMessages: string[];
+}
+
 /* I know that this is very bad coding practice, but bear with me here. All the functions that have to do with 
  * the main game be situated here. To toggle between sections, just search the word `PAGEBREAK`*/
-function AppRoom() {
+const AppRoom:FC<AppRoomProps> = (props) => {
+  const messageRef = createRef<HTMLInputElement>()
+  const bidRef = createRef<HTMLSelectElement>()
   /** PAGEBREAK Functions that have to do with initializing the players cards **/
-  var playerNum = 1 //TODO should be const: init when establishing multiplayer
+  var [playerNum, setPlayerNum] = useState<number>((props.id+1)%4) 
 
   const shuffle = (array:number[]) => {
     let currentIndex = array.length,  randomIndex;
@@ -304,6 +321,10 @@ function AppRoom() {
   const [cardList, setCardList] = useState<number[]>(
     genCards()[playerNum] 
     //[...cardInitList]
+  )
+
+  const [bidList, setBidList] = useState<number[][]>(
+    [[]]
   )
   
   const [selLst, setSelLst] = useState<cardSelected[]>(
@@ -419,20 +440,46 @@ function AppRoom() {
   /** Side Bar OnClick functions.**/
   const [canBid, setCanBid] = useState<boolean> (true) //change to false later
 
-  const [sideMessages, setSideMessages] = useState<string[]> (
-    [
-      
-    ]
+  const [roomPeople, setRoomPeople] = useState<[string, number, string][]> (
+    [['', 0, ''], ['', 1, ''], ['', 2, ''], ['', 3, '']]
   ) 
 
   const sendMessage = () => {
-
+    const message = messageRef.current?.value 
+    if (message !== null) socket.emit("message-send", message, props.roomCode)
+    //set the message thing to like nothing or sth
+    //alternatively find a way to tokenize the messages to prevent multiple sendings of the same thing. 
   }
 
   const sendBid = () => {
 
   }
 
+  const startGame = () => {
+
+  }
+
+  useEffect(() => {
+    socket.emit("update-room-people", props.roomCode)
+    socket.emit("message-send", props.name + " has joined the room!", props.roomCode, props.name)
+  }, [playerNum])
+
+  socket.on("provide-people-name", (roomInfo) => {
+    console.log(roomInfo)
+    setRoomPeople((prev) => {
+      return roomInfo
+    })
+
+    for (var i = 0; i < 4; ++i){
+      if (roomInfo[i][2] === socket.id){
+        const playerNum = i
+        setPlayerNum((prev) => {
+          return playerNum
+        })
+      }
+    }
+  })
+  
 
   /** PAGEBREAK return statement **/
   return (
@@ -454,11 +501,12 @@ function AppRoom() {
         handleClickCard={() => {}}
         handleClickSubmit={() => {return 69420}}
       />
-      <InfoTable setsWon={5} partner={true} breakTrump={false} trump={trump} playerPos={0} name={"Joe"}/>
-      <InfoTable setsWon={5} partner={partner === 1} breakTrump={false} trump={trump} playerPos={1} name={"My name"}/>
-      <InfoTable setsWon={5} partner={partner === 2} breakTrump={false} trump={trump} playerPos={2} name={"Hello!!!"}/>
-      <InfoTable setsWon={5} partner={partner === 3} breakTrump={false} trump={trump} playerPos={3} name={"is"}/>
-      <SideBar sendMessage={sendMessage} sendBid={sendBid} allowBid={canBid} messages={sideMessages} roomCode={"asdf"}/>
+      <InfoTable setsWon={5} partner={true} breakTrump={false} trump={trump} playerPos={0} name={props.name}/>
+      <InfoTable setsWon={5} partner={partner === 1} breakTrump={false} trump={trump} playerPos={1} name={roomPeople[(playerNum+1)%4][0]}/>
+      <InfoTable setsWon={5} partner={partner === 2} breakTrump={false} trump={trump} playerPos={2} name={roomPeople[(playerNum+2)%4][0]}/>
+      <InfoTable setsWon={5} partner={partner === 3} breakTrump={false} trump={trump} playerPos={3} name={roomPeople[(playerNum+3)%4][0]}/>
+      <SideBar sendMessage={sendMessage} sendBid={sendBid} startGame={startGame} startGameBool={false}
+      allowBid={canBid} messages={props.sideMessages} roomCode={props.roomCode} messageRef={messageRef} bidRef={bidRef} />
     </div>
   )
 }
