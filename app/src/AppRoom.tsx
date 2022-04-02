@@ -196,7 +196,7 @@ export const SideBar:FC<SideBarProps> = (props) =>{
       <div className='flex-row'>
         <input id = "message" placeholder="Message" inputMode="text" className='sidebar-text'/>
         <button onClick={props.sendMessage} className='sidebar-button'>
-          Send Message
+          Send!
         </button>
       </div>
       <div className='flex-row'>
