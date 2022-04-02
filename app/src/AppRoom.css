@@ -85,9 +85,11 @@
 
 .flex-row {
   display: flex;
-  justify-content: space-between;
-  padding: 1%;
-  width: 18%;
+  justify-content: center;
+  max-width: 18vw;
+  width: 18vw;
+  margin-right: 5vw;
+  background-color: rgba(109, 223, 115, 0.5);
 }
 
 .sidebar-title{
@@ -143,7 +145,7 @@
 }
 
 .sidebar-text{
-  width: 8vw;
+  width: 8.3vw;
   font: 17px "Century Gothic", Futura, sans-serif;
 }
 
@@ -153,7 +155,7 @@
 }
 
 .sidebar-button{
-  width: 9vw;
+  width: 8vw;
   font: 17px "Century Gothic", Futura, sans-serif;
 }
 

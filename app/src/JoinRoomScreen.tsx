@@ -72,7 +72,7 @@ const JoinRoom:FC<JoinRoomProps> = (props) => {
         <button className='text-button' onClick={submitForm}>Submit</button>
       </div>
       <div className='text-title'>
-        <p className='text-long'>Hewwo welcome to me Bridge Game!!!!!!!!!</p>
+        <p className='text-long'>Hewwo welcome to me Bridge Game nya~~~</p>
       </div>
     </div>
   )

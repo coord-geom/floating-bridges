@@ -57,7 +57,7 @@ function MainComponent() {
     } )
   })
 
-  if (!inRoom){
+  if (inRoom){ //add ! when done
     return <JoinRoom setInfor={setInfor}/>
   }
   else {
