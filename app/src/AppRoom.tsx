@@ -32,7 +32,8 @@ export const Card: FC<CardProps> = (props) => {
 
   return (
     <img src={props.hidden ? hiddenCard : cardImages[props.suit][props.num]} alt={cardName} 
-    className={props.hidden ? "card-hidden" : props.selected ? "card-selected" : "card"} onClick={props.handleClick}/>
+    className={props.hidden ? "card-hidden" : props.selected ? "card-selected" : "card"} 
+    onClick={props.hidden ? () => {} : props.handleClick}/>
   );
   
 }
