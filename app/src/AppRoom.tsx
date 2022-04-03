@@ -181,7 +181,7 @@ interface SideBarProps {
   biddingPhase: boolean
 }
 
-export const SideBar:FC<SideBarProps> = (props) =>{  
+export const SideBar:FC<SideBarProps> = (props) => {  
   const bidSuits = ["Club", "Diamond", "Heart", "Spade", "No Trump"]
   const getString = (id:number)=>{
     if (props.biddingPhase) {
