@@ -9,6 +9,15 @@ import { useEffect } from "react";
 
 export const socket = io('http://localhost:3000') //the webpage which the server is hosted on
 
+export const makeid = (length:number) => {
+  var result           = '';
+  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+ return result;
+}
 
 
 function MainComponent() {
@@ -16,13 +25,13 @@ function MainComponent() {
   const [roomCode, setRoomCode] = useState<string> ("")
   const [name, setName] = useState<string> ("")
   const [id, setId] = useState<number> (-1)
-  const [sideMessages, setSideMessages] = useState<string[]> (
+  const [sideMessages, setSideMessages] = useState<[string,string][]> (
     []
   ) 
+  const [prevToken, setPrevToken] = useState<[string, string]>(["", ""])
   
 
   const afterJoinRoom = (room:string) => {
-    console.log("am calling join-room")
     socket.emit('join-room', room, true, name, id)
     socket.emit("update-room-people", room)
   }
@@ -52,12 +61,16 @@ function MainComponent() {
       return false
     })
   }
+
+  const addMessage = (message:string, token:string) => {
+    setPrevToken((prev) => {
+      return [message, token]
+    })
+  }
   
 
   useEffect(() => {
     socket.on("return-people-room", (numPeople, name, room) => {
-      console.log("I am calling from return people room")
-      console.log("num people is: " + numPeople)
       if (numPeople >= 4){
         // eslint-disable-next-line no-restricted-globals
         confirm("There are already 4 people in the room!")
@@ -70,23 +83,24 @@ function MainComponent() {
     } )
   })
 
-  socket.on("message-recieve", (message, name) => {
-    console.log("got to this point")
+  socket.on("message-recieve", (message, token) => {
+    addMessage(message, token)
+  })
+
+  useEffect(() => {
     setSideMessages((prev) => {
-      const messageOut = (name === null) ? message : message + " - " + name
-      if (prev[prev.length-1] !== messageOut){
-        prev.push(messageOut)
-        console.log(prev)
-      }
+      const message = prevToken[0]
+      const token = prevToken[1]
+      prev.push([message, token])
       return [...prev]
     })
-  })
+  }, [prevToken])
 
   if (!inRoom){ 
     return <JoinRoom setInfor={setInfor}/>
   }
   else {
-    return <AppRoom roomCode={roomCode} name={name} id={id} sideMessages={sideMessages}/>
+    return <AppRoom roomCode={roomCode} name={name} id={id} sideMessages={sideMessages} addMessage={addMessage}/>
   }
 }
 

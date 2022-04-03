@@ -3,7 +3,7 @@ import cards from './cards.gif';
 import './AppRoom.css';
 import React, { createRef, FC, useEffect, useState } from "react"
 import ReactDOM from "react-dom"
-import { socket } from '.';
+import { socket, makeid } from '.';
 
 const suits = ["clubs", "diamonds", "hearts", "spades"]
 const numbers = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace']
@@ -48,11 +48,12 @@ interface HandProps {
 
 export const Hand:FC<HandProps> = (props) => {
   const getSuit = (card:number) => {
-    console.log(props.cardLst)
+    if (card < 0) return 0
     return Math.floor(card/13)
   }
 
   const getNumber = (card:number) => {
+    if (card < 0) return 0
     return card%13
   }
 
@@ -62,7 +63,7 @@ export const Hand:FC<HandProps> = (props) => {
         <Card 
           suit={getSuit(val)} 
           num={getNumber(val)} 
-          hidden={false} 
+          hidden={val < 0} 
           selected={props.selLst[i]} 
           handleClick={() => props.handleClickCard(i)}
           key={i}
@@ -77,7 +78,6 @@ export const Hand:FC<HandProps> = (props) => {
 
 export const MiddleHand:FC<HandProps> = (props) => {
   const getSuit = (card:number) => {
-    console.log(props.cardLst)
     return Math.floor(card/13)
   }
 
@@ -174,7 +174,7 @@ interface SideBarProps {
   startGame: () => void
   startGameBool: boolean
   allowBid: boolean
-  messages: string[]
+  messages: [string, string][]
   roomCode:string
   messageRef: React.RefObject<HTMLInputElement>
   bidRef: React.RefObject<HTMLSelectElement>
@@ -188,14 +188,25 @@ export const SideBar:FC<SideBarProps> = (props) =>{
     return Math.ceil(id/5) + " " + bidSuits[(id-1) % 5]
   }
 
+  const uniqueMessages:[string,string][] = []
+  for (var i = 0; i < props.messages.length; ++i){
+    const message = props.messages[i]
+    if (uniqueMessages.length === 0){
+      uniqueMessages.push(message)
+    }
+    else if (uniqueMessages[uniqueMessages.length-1][1] !== message[1]){
+      uniqueMessages.push(message)
+    }
+  }
+
   return (
     <div className='sidebar'>
       <div className='sidebar-title'>
         {"Room Code: " + props.roomCode}
       </div>
       <div className='sidebar-message-log'>
-        {props.messages.map((val, i) => 
-          <div className={'sidebar-message-' + (i%2)}> {val} </div>
+        {uniqueMessages.map((val, i) => 
+          <div className={'sidebar-message-' + (i%2)}> {val[0]} </div>
         )}
       </div>
       <div className='flex-row'>
@@ -231,7 +242,8 @@ interface AppRoomProps{
   roomCode: string;
   name: string;
   id: number;
-  sideMessages: string[];
+  sideMessages: [string,string][];
+  addMessage: (message:string, token:string) => void
 }
 
 /* I know that this is very bad coding practice, but bear with me here. All the functions that have to do with 
@@ -305,11 +317,6 @@ const AppRoom:FC<AppRoomProps> = (props) => {
       if (getPoints(cardList4) < 5) noReshuffle = false
     } 
 
-    /*console.log(cardList1)
-    console.log(cardList2)
-    console.log(cardList3)
-    console.log(cardList4)*/
-
     return [cardList1, cardList2, cardList3, cardList4]
   }
 
@@ -319,7 +326,7 @@ const AppRoom:FC<AppRoomProps> = (props) => {
 
   /** States and Functions which have to do with the user's hand **/
   const [cardList, setCardList] = useState<number[]>(
-    genCards()[playerNum] 
+    Array(13).fill(-1)
     //[...cardInitList]
   )
 
@@ -355,9 +362,7 @@ const AppRoom:FC<AppRoomProps> = (props) => {
   }
   
   const handleClickCard = (index:number) => {
-    console.log("Card " + index + " was clicked!!")
     updateSelected(index)
-    console.log(selLst)
   }
 
   const checkValidCard = (cardToPlay:number, trump:number, breakTrump:boolean, firstCard:number, hand:number[]) => {
@@ -392,13 +397,10 @@ const AppRoom:FC<AppRoomProps> = (props) => {
   // This function removes the selected card, if any, and outputs the card num of the removed card. 
   // TODO this function will have to be changed to communicate with the server
   const handleClickSubmit = () => {
-    console.log("Calling handle Click Submit!!!!")
     var selected = -1
     for (var i = 0; i < selLst.length; ++i){
       if (selLst[i]) selected = i
     }
-    console.log("Card " + selected + " is going to be deleted!")
-    console.log(cardList)
 
     if (selected === -1){
       // eslint-disable-next-line no-restricted-globals
@@ -416,7 +418,6 @@ const AppRoom:FC<AppRoomProps> = (props) => {
       setCardList((prev) => {
         if (prev.length === numCards){
           prev.splice(selected, 1)
-          console.log(prev)
           setNumCards((prev) =>{ return prev-1})
           updateSelected(-1)
           return [...prev]
@@ -424,7 +425,6 @@ const AppRoom:FC<AppRoomProps> = (props) => {
         return prev        
       })
       
-      console.log("End of handleClickSubmit [" + cardList + "] (length " +  cardList.length + ")")
       return cardRemoved
     }
   }
@@ -446,7 +446,12 @@ const AppRoom:FC<AppRoomProps> = (props) => {
 
   const sendMessage = () => {
     const message = messageRef.current?.value 
-    if (message !== null) socket.emit("message-send", message, props.roomCode)
+    const token = makeid(16)
+    if (message !== null && message !== undefined) {
+      socket.emit("message-send", message, props.roomCode, token)
+      props.addMessage(message, token)
+    }
+    
     //set the message thing to like nothing or sth
     //alternatively find a way to tokenize the messages to prevent multiple sendings of the same thing. 
   }
@@ -460,12 +465,14 @@ const AppRoom:FC<AppRoomProps> = (props) => {
   }
 
   useEffect(() => {
+    const message = props.name + " has joined the room!"
+    const token = makeid(16)
     socket.emit("update-room-people", props.roomCode)
-    socket.emit("message-send", props.name + " has joined the room!", props.roomCode, props.name)
+    socket.emit("message-send", message, props.roomCode, token)
+    props.addMessage(message, token)
   }, [playerNum])
 
   socket.on("provide-people-name", (roomInfo) => {
-    console.log(roomInfo)
     setRoomPeople((prev) => {
       return roomInfo
     })
