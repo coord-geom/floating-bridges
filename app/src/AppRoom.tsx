@@ -91,7 +91,7 @@ export const MiddleHand:FC<HandProps> = (props) => {
         <Card 
           suit={getSuit(val)} 
           num={getNumber(val)} 
-          hidden={val === -1} 
+          hidden={val < 0} 
           selected={props.selLst[i]} 
           handleClick={() => props.handleClickCard(i)}
           key={i}
@@ -178,14 +178,28 @@ interface SideBarProps {
   roomCode:string
   messageRef: React.RefObject<HTMLInputElement>
   bidRef: React.RefObject<HTMLSelectElement>
+  biddingPhase: boolean
 }
 
 export const SideBar:FC<SideBarProps> = (props) =>{  
   const bidSuits = ["Club", "Diamond", "Heart", "Spade", "No Trump"]
   const getString = (id:number)=>{
-    if (id === 0) return "Pass"
-
-    return Math.ceil(id/5) + " " + bidSuits[(id-1) % 5]
+    if (props.biddingPhase) {
+      if (id === 0) return "Pass"
+      return Math.ceil(id/5) + " " + bidSuits[(id-1) % 5]
+    }
+    else {
+      const getSuit = (card:number) => {
+        if (card < 0) return 0
+        return Math.floor(card/13)
+      }
+    
+      const getNumber = (card:number) => {
+        if (card < 0) return 0
+        return card%13
+      }
+      return numbers[getNumber(id)] + " of " + suits[getSuit(id)]
+    }
   }
 
   const uniqueMessages:[string,string][] = []
@@ -218,12 +232,12 @@ export const SideBar:FC<SideBarProps> = (props) =>{
       <div className='flex-row'>
         <select id="bid" className='sidebar-dropdown' ref={props.bidRef}>
           <option value={-1} disabled selected hidden>Bid</option>    
-          {[...Array(36).keys()].map((val, i) => 
+          {[...Array(props.biddingPhase ? 36 : 52).keys()].map((val, i) => 
             <option value={i}>{getString(i)}</option>
           )}
         </select>
         <button onClick={props.sendBid} className='sidebar-button' disabled={!props.allowBid}>
-          Sumbit Bid!
+          {props.biddingPhase ? "Sumbit Bid!" : "Select Partner!"}
         </button>
       </div>
       <button onClick={props.startGame} className='sidebar-button' disabled={!props.startGameBool}>
@@ -513,7 +527,8 @@ const AppRoom:FC<AppRoomProps> = (props) => {
       <InfoTable setsWon={5} partner={partner === 2} breakTrump={false} trump={trump} playerPos={2} name={roomPeople[(playerNum+2)%4][0]}/>
       <InfoTable setsWon={5} partner={partner === 3} breakTrump={false} trump={trump} playerPos={3} name={roomPeople[(playerNum+3)%4][0]}/>
       <SideBar sendMessage={sendMessage} sendBid={sendBid} startGame={startGame} startGameBool={false}
-      allowBid={canBid} messages={props.sideMessages} roomCode={props.roomCode} messageRef={messageRef} bidRef={bidRef} />
+      allowBid={canBid} messages={props.sideMessages} roomCode={props.roomCode} messageRef={messageRef} bidRef={bidRef} 
+      biddingPhase={true}/>
     </div>
   )
 }

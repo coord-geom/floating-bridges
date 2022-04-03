@@ -8,11 +8,15 @@ const roomPeople = new Map();
 /**
  *  This is a Map of json objects directing from a room id to objects of the following form
  *  {
-      people: [],         // 4 elements of the following form: [name, roomID, socketID]
-      roomState: 0,       // 0 for not started; 1 for bidding; 2 for playing
-      hand: [],           // the hand given to players. Inits when roomState gets set to 1.
-      bid: [0, 0],        // suit, bid
-      partners: [0, 0]    // The 2 ids of the people who are partners. 
+      people: [],                   // 4 elements of the following form: [name, roomID, socketID]
+      roomState: 0,                 // 0 for not started; 1 for bidding; 2 for playing
+      hand: [],                     // the hand given to players. Inits when roomState gets set to 1.
+      bids: [],                     // collection of all bids 
+      bid: [0, 0],                  // suit, bid
+      partners: [0, 0],             // The 2 ids of the people who are partners. 
+      cardsPlayed: [-1,-1,-1,-1],   // Cards Player 
+      roundStarter: -1,             // Id of the player that starts the round
+      setsWon: [0, 0, 0, 0]         // Number of sets won for each player
     }
  */
 
@@ -29,10 +33,14 @@ io.on('connection', socket => {
 
       var peopleName = {
         people: [],
-        roomState: 0, //0 for not started; 1 for bidding; 2 for playing
+        roomState: 0, //0 for not started; 1 for bidding; 2 for partner; 3 for game
         hand: [],
+        bids: [],
         bid: [0, 0], //suit, bid
-        partners: [0, 0]
+        partners: [0, 0],
+        cardsPlayed: [-1,-1,-1,-1],
+        roundStarter: -1,
+        setsWon: [0, 0, 0, 0]
       }
       var peopleNamePeople = []
 
