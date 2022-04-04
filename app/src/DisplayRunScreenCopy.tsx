@@ -1,3 +1,4 @@
+
 import logo from './logo.svg';
 import cards from './cards.gif';
 import './DisplayRunScreen.css';
@@ -119,10 +120,12 @@ interface DisplayRunsProps{
 
 const DisplayRuns:FC<DisplayRunsProps> = (props) => {  
   
-  const bids    = props.infor.bids
-  const partner = props.infor.partner
-  const plays   = props.infor.plays  
-  const winners = props.infor.winners
+  const bids       = props.infor.bids
+  const winnerId   = (bids.length)%4
+  const winningBid = bids[bids.length-1] % 5
+  const partner    = props.infor.partner
+  const plays      = props.infor.plays  
+  const winners    = props.infor.winners
   
 
   var data:DisplayCellProps[][] = []
@@ -153,11 +156,16 @@ const DisplayRuns:FC<DisplayRunsProps> = (props) => {
     return Math.ceil((id + 1)/5) + " " + bidSuits[(id) % 5]
   }
 
-  for (var i = 0; i < 4*Math.ceil(bids.length/4); ++i){
+  //Adding additional buffer so stuff is nice
+  while (bids.length%4 !== 0){
+    bids.push(-2)
+  }
+
+  for (var i = 0; i < bids.length; ++i){
     if (i%4 === 0){
       data.push([])
     }
-    if (i >= bids.length) {
+    if (bids[i] === -2) {
       data[data.length-1].push(
         {
           infoType: 0,
@@ -198,7 +206,8 @@ const DisplayRuns:FC<DisplayRunsProps> = (props) => {
         }
       )
     } 
-    else if (i === bids.length % 4){
+    else if (i === winnerId){
+      console.log(winnerId)
       data[data.length-1].push(
         {
           infoType: 0,
@@ -227,26 +236,28 @@ const DisplayRuns:FC<DisplayRunsProps> = (props) => {
 
   // Playing
   const setsWon = [0,0,0,0]
+  var startPlayer = (winningBid === 4) ? winnerId : (winnerId+1)%4
   for (var i = 0; i < plays.length; ++i){
     const round = plays[i]
     setsWon[round.win]+=1
     data.push([])
     for (var j = 0; j < 4; ++j){
-      if (j === round.win){
+      const index = (4-startPlayer+j)%4
+      if (index === round.win){
         data[data.length-1].push(
           {
             infoType: 1,
             theme: "box-card-win",
-            cardNum: round.cards[j]
+            cardNum: round.cards[index]
           }
         )
       } 
-      else if (j === round.start){
+      else if (index === round.start){
         data[data.length-1].push(
           {
             infoType: 1,
             theme: "box-card-start",
-            cardNum: round.cards[j]
+            cardNum: round.cards[index]
           }
         )
       }
@@ -255,7 +266,7 @@ const DisplayRuns:FC<DisplayRunsProps> = (props) => {
           {
             infoType: 1,
             theme: "box-card-norm",
-            cardNum: round.cards[j]
+            cardNum: round.cards[index]
           }
         )
       }
@@ -267,6 +278,7 @@ const DisplayRuns:FC<DisplayRunsProps> = (props) => {
         text: round.desc
       }
     )
+    startPlayer = round.win
   }
 
   // Results

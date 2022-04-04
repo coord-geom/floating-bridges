@@ -1,0 +1,162 @@
+{
+    "bids": [
+        3,
+        4,
+        -1,
+        -1,
+        -1
+    ],
+    "partner": {
+        "card": 51,
+        "id": 3
+    },
+    "plays": [
+        {
+            "cards": [
+                21,
+                19,
+                48,
+                22
+            ],
+            "start": 0,
+            "win": 3,
+            "desc": "Round: 1\nPlayer 1 starts\nPlayer 4 wins."
+        },
+        {
+            "cards": [
+                40,
+                47,
+                45,
+                43
+            ],
+            "start": 3,
+            "win": 0,
+            "desc": "Round: 2\nPlayer 4 starts\nPlayer 1 wins."
+        },
+        {
+            "cards": [
+                18,
+                20,
+                37,
+                23
+            ],
+            "start": 0,
+            "win": 3,
+            "desc": "Round: 3\nPlayer 1 starts\nPlayer 4 wins."
+        },
+        {
+            "cards": [
+                32,
+                29,
+                28,
+                30
+            ],
+            "start": 3,
+            "win": 3,
+            "desc": "Round: 4\nPlayer 4 starts\nPlayer 4 wins."
+        },
+        {
+            "cards": [
+                42,
+                39,
+                49,
+                5
+            ],
+            "start": 3,
+            "win": 1,
+            "desc": "Round: 5\nPlayer 4 starts\nPlayer 2 wins."
+        },
+        {
+            "cards": [
+                41,
+                7,
+                51,
+                44
+            ],
+            "start": 1,
+            "win": 3,
+            "desc": "Round: 6\nPlayer 2 starts\nPlayer 4 wins."
+        },
+        {
+            "cards": [
+                1,
+                3,
+                8,
+                0
+            ],
+            "start": 3,
+            "win": 1,
+            "desc": "Round: 7\nPlayer 4 starts\nPlayer 2 wins."
+        },
+        {
+            "cards": [
+                34,
+                27,
+                26,
+                36
+            ],
+            "start": 1,
+            "win": 0,
+            "desc": "Round: 8\nPlayer 2 starts\nPlayer 1 wins."
+        },
+        {
+            "cards": [
+                14,
+                15,
+                6,
+                25
+            ],
+            "start": 0,
+            "win": 3,
+            "desc": "Round: 9\nPlayer 1 starts\nPlayer 4 wins."
+        },
+        {
+            "cards": [
+                12,
+                33,
+                13,
+                2
+            ],
+            "start": 3,
+            "win": 3,
+            "desc": "Round: 10\nPlayer 4 starts\nPlayer 4 wins."
+        },
+        {
+            "cards": [
+                50,
+                17,
+                46,
+                4
+            ],
+            "start": 3,
+            "win": 3,
+            "desc": "Round: 11\nPlayer 4 starts\nPlayer 4 wins."
+        },
+        {
+            "cards": [
+                11,
+                24,
+                16,
+                10
+            ],
+            "start": 3,
+            "win": 3,
+            "desc": "Round: 12\nPlayer 4 starts\nPlayer 4 wins."
+        },
+        {
+            "cards": [
+                35,
+                31,
+                38,
+                9
+            ],
+            "start": 3,
+            "win": 1,
+            "desc": "Round: 13\nPlayer 4 starts\nPlayer 2 wins."
+        }
+    ],
+    "winners": [
+        1,
+        2
+    ]
+}

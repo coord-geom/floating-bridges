@@ -48,19 +48,167 @@ function MainComponent() {
 
   const [gamePlayInfo, setGamePlayInfo] = useState<roundInfo>(
     {
-      bids: [0, -1, -1, -1],
-      partner: {
-        card: 0,   
-        id: 0       
-      },         
-      plays: [{
-        cards: [0, 0, 0, 0],
-        start: 0,
-        win: 0,
-        desc: "Round " + 1 + "\nPlayer 1 starts\nPlayer 1 wins"
-      }],
-      winners:[0, 1]
-    }
+      "bids": [
+          3,
+          4,
+          -1,
+          -1,
+          -1
+      ],
+      "partner": {
+          "card": 51,
+          "id": 3
+      },
+      "plays": [
+          {
+              "cards": [
+                  21,
+                  19,
+                  48,
+                  22
+              ],
+              "start": 0,
+              "win": 3,
+              "desc": "Round: 1\nPlayer 1 starts\nPlayer 4 wins."
+          },
+          {
+              "cards": [
+                  40,
+                  47,
+                  45,
+                  43
+              ],
+              "start": 3,
+              "win": 0,
+              "desc": "Round: 2\nPlayer 4 starts\nPlayer 1 wins."
+          },
+          {
+              "cards": [
+                  18,
+                  20,
+                  37,
+                  23
+              ],
+              "start": 0,
+              "win": 3,
+              "desc": "Round: 3\nPlayer 1 starts\nPlayer 4 wins."
+          },
+          {
+              "cards": [
+                  32,
+                  29,
+                  28,
+                  30
+              ],
+              "start": 3,
+              "win": 3,
+              "desc": "Round: 4\nPlayer 4 starts\nPlayer 4 wins."
+          },
+          {
+              "cards": [
+                  42,
+                  39,
+                  49,
+                  5
+              ],
+              "start": 3,
+              "win": 1,
+              "desc": "Round: 5\nPlayer 4 starts\nPlayer 2 wins."
+          },
+          {
+              "cards": [
+                  41,
+                  7,
+                  51,
+                  44
+              ],
+              "start": 1,
+              "win": 3,
+              "desc": "Round: 6\nPlayer 2 starts\nPlayer 4 wins."
+          },
+          {
+              "cards": [
+                  1,
+                  3,
+                  8,
+                  0
+              ],
+              "start": 3,
+              "win": 1,
+              "desc": "Round: 7\nPlayer 4 starts\nPlayer 2 wins."
+          },
+          {
+              "cards": [
+                  34,
+                  27,
+                  26,
+                  36
+              ],
+              "start": 1,
+              "win": 0,
+              "desc": "Round: 8\nPlayer 2 starts\nPlayer 1 wins."
+          },
+          {
+              "cards": [
+                  14,
+                  15,
+                  6,
+                  25
+              ],
+              "start": 0,
+              "win": 3,
+              "desc": "Round: 9\nPlayer 1 starts\nPlayer 4 wins."
+          },
+          {
+              "cards": [
+                  12,
+                  33,
+                  13,
+                  2
+              ],
+              "start": 3,
+              "win": 3,
+              "desc": "Round: 10\nPlayer 4 starts\nPlayer 4 wins."
+          },
+          {
+              "cards": [
+                  50,
+                  17,
+                  46,
+                  4
+              ],
+              "start": 3,
+              "win": 3,
+              "desc": "Round: 11\nPlayer 4 starts\nPlayer 4 wins."
+          },
+          {
+              "cards": [
+                  11,
+                  24,
+                  16,
+                  10
+              ],
+              "start": 3,
+              "win": 3,
+              "desc": "Round: 12\nPlayer 4 starts\nPlayer 4 wins."
+          },
+          {
+              "cards": [
+                  35,
+                  31,
+                  38,
+                  9
+              ],
+              "start": 3,
+              "win": 1,
+              "desc": "Round: 13\nPlayer 4 starts\nPlayer 2 wins."
+          }
+      ],
+      "winners": [
+          1,
+          2
+      ]
+  }
   )
   
 
@@ -83,6 +231,35 @@ function MainComponent() {
       return true
     })
     //declare xxx has join da room
+  }
+
+  const newGame = () => {
+    setGamePlayInfo((prev) => {
+      return {
+        bids: Array.from({length: 40}, () => Math.floor(Math.random() * 15)),
+        partner: {
+          card: 0,   
+          id: 0       
+        },         
+        plays: [{
+          cards: [0, 1, 2, 3],
+          start: 0,
+          win: 1,
+          desc: "Round " + 1 + "\nPlayer 1 starts\nPlayer 1 wins"
+        },{
+          cards: [4,5,6,7],
+          start: 0,
+          win: 1,
+          desc: "Round " + 1 + "\nPlayer 1 starts\nPlayer 1 wins"
+        },{
+          cards: [8,9,10,11],
+          start: 0,
+          win: 1,
+          desc: "Round " + 1 + "\nPlayer 1 starts\nPlayer 1 wins"
+        }],
+        winners:[0, 3]
+      }
+    })
   }
 
   const setDisplayRuns = (bool:boolean) => () => {
@@ -137,8 +314,7 @@ function MainComponent() {
   }, [prevToken])
 
   if (inDisplayRuns){
-    console.log("yes")
-    return <DisplayRuns infor={gamePlayInfo} onCLick={() => {}} />
+    return <DisplayRuns infor={gamePlayInfo} onCLickNew={newGame} onClickReturn={setDisplayRuns(false)} />
   }
   else if (!inRoom){ 
     return <JoinRoom setInfor={setInfor} setDisplayRuns={setDisplayRuns(true)}/>
