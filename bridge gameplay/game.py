@@ -1,5 +1,6 @@
 import random
 import json
+import copy
 
 ILLEGAL_PENALTY = -1234567890
 
@@ -365,7 +366,7 @@ class Bridge:
 
         # If you are the last player
         elif (self.player_num+1)%4 == Bridge.next_starter: 
-            prev_starter = Bridge.next_starter
+            prev_starter = copy.deepcopy(Bridge.next_starter)
             Bridge.next_starter = self.largest_card(Bridge.past_cards)
             cards_to_int = []
             for i in Bridge.past_cards:
