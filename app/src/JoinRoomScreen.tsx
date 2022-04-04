@@ -8,11 +8,12 @@ import { socket } from '.';
 import { createRef } from 'react';
 import { InputType } from 'zlib';
 
-interface JoinRoomProps{
+interface DisplayRunsProps{
   setInfor: (room: string, name:string, id:number) => void;
+  setDisplayRuns: () => void
 }
 
-const JoinRoom:FC<JoinRoomProps> = (props) => {  
+const JoinRoom:FC<DisplayRunsProps> = (props) => {  
   const roomCodeRef = createRef<HTMLInputElement>()
   const nameRef = createRef<HTMLInputElement>()
 
@@ -70,6 +71,7 @@ const JoinRoom:FC<JoinRoomProps> = (props) => {
           <input id = "name" ref = {nameRef} placeholder="amogus" inputMode="text" className='text-input'/>
         </div>
         <button className='text-button' onClick={submitForm}>Submit</button>
+        <button className='text-button' onClick={props.setDisplayRuns}>Display AI Simulation!</button>
       </div>
       <div className='text-title'>
         <p className='text-long'>Hewwo welcome to me Bridge Game nya~~~</p>
