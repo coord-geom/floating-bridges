@@ -171,7 +171,7 @@ while game_cnt<10000: # game_cnt < NUMGAMES
         if printing: print(Bridge.bidder_sets,'Bidder lose')
         #print('Lose Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
         pass
-
+    Bridge.write_to_json()
     if game_cnt%1000 == 0:
         print(game_cnt/100,'% done')
 

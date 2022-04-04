@@ -342,7 +342,6 @@ class Bridge:
         # If we have reached the end of the game
         if Bridge.bidder_sets + Bridge.against_sets == 13:
             Bridge.current_phase = Bridge.END_PHASE
-            Bridge.write_to_json()
 
         return winner
 
