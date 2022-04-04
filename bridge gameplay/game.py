@@ -369,7 +369,7 @@ class Bridge:
             Bridge.next_starter = self.largest_card(Bridge.past_cards)
             cards_to_int = []
             for i in Bridge.past_cards:
-                cards_to_int.append(5 * (i[0] - 1) + i[1] - 1)
+                cards_to_int.append(13 * (i[0] - 1) + i[1] - 1)
             desc = "Round: " + str(int(len(Bridge.cards_played) / 4)) + "\nPlayer " + str(prev_starter + 1) + " starts\nPlayer " + str(Bridge.next_starter + 1) + " wins."
             play = {'cards': cards_to_int, 'start': prev_starter, 'win': Bridge.next_starter, 'desc': desc}
             Bridge.plays_lst.append(play)
