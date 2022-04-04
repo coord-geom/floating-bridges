@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import AppRoom from './AppRoom';
 import JoinRoom from './JoinRoomScreen';
+import DisplayRuns, { roundInfo } from './DisplayRunScreen';
 import reportWebVitals from './reportWebVitals';
 import {io} from 'socket.io-client'
 import { useEffect } from "react";
@@ -22,6 +23,7 @@ export const makeid = (length:number) => {
 
 function MainComponent() {
   const [inRoom, setInRoom] = useState<boolean> (false)
+  const [inDisplayRuns, setInDisplayRuns] = useState<boolean> (false)
   const [roomCode, setRoomCode] = useState<string> ("")
   const [name, setName] = useState<string> ("")
   const [id, setId] = useState<number> (-1)
@@ -29,9 +31,40 @@ function MainComponent() {
     []
   ) 
   const [prevToken, setPrevToken] = useState<[string, string]>(["", ""])
+
+  const genGamePlay = () => {
+    var out = []
+    for (var i = 0; i < 13; ++i){
+      out.push({
+        cards: [0, 0, 0, 0],
+        start: 0,
+        win: 0,
+        desc: "Round " + i + "\nPlayer 1 starts\nPlayer 1 wins"
+      })
+    }
+    return out
+  }
   
 
-  const afterJoinRoom = (room:string) => {
+  const [gamePlayInfo, setGamePlayInfo] = useState<roundInfo>(
+    {
+      bids: [0, -1, -1, -1],
+      partner: {
+        card: 0,   
+        id: 0       
+      },         
+      plays: [{
+        cards: [0, 0, 0, 0],
+        start: 0,
+        win: 0,
+        desc: "Round " + 1 + "\nPlayer 1 starts\nPlayer 1 wins"
+      }],
+      winners:[0, 1]
+    }
+  )
+  
+
+  const afterJoinRoom = (room:string) => () => {
     socket.emit('join-room', room, true, name, id)
     socket.emit("update-room-people", room)
   }
@@ -50,6 +83,13 @@ function MainComponent() {
       return true
     })
     //declare xxx has join da room
+  }
+
+  const setDisplayRuns = (bool:boolean) => () => {
+    console.log(bool)
+    setInDisplayRuns((prev) => {
+      return bool
+    })
   }
 
   useEffect(() => {
@@ -96,8 +136,12 @@ function MainComponent() {
     })
   }, [prevToken])
 
-  if (!inRoom){ 
-    return <JoinRoom setInfor={setInfor}/>
+  if (inDisplayRuns){
+    console.log("yes")
+    return <DisplayRuns infor={gamePlayInfo} onCLick={() => {}} />
+  }
+  else if (!inRoom){ 
+    return <JoinRoom setInfor={setInfor} setDisplayRuns={setDisplayRuns(true)}/>
   }
   else {
     return <AppRoom roomCode={roomCode} name={name} id={id} sideMessages={sideMessages} addMessage={addMessage}/>

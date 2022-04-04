@@ -55,7 +55,7 @@
   font: 20px "Century Gothic", Futura, sans-serif;
 }
 
-.flex-row-join {
+.flex-row-display {
   display: flex;
   padding-left: 5vw;
   justify-content: center;
@@ -78,8 +78,7 @@
 .text-button{
   font: 40px "Century Gothic", Futura, sans-serif;
   margin: 1%;
-  cursor: pointer;
-  min-width: 20vw;  
+  width: 10%;
 }
 
 .text-input{

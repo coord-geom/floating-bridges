@@ -16,7 +16,8 @@ const roomPeople = new Map();
       partners: [0, 0],             // The 2 ids of the people who are partners. 
       cardsPlayed: [-1,-1,-1,-1],   // Cards Player 
       roundStarter: -1,             // Id of the player that starts the round
-      setsWon: [0, 0, 0, 0]         // Number of sets won for each player
+      setsWon: [0, 0, 0, 0],        // Number of sets won for each player
+      trumpBroken: false            // Whether the trump is broken
     }
  */
 
@@ -40,7 +41,8 @@ io.on('connection', socket => {
         partners: [0, 0],
         cardsPlayed: [-1,-1,-1,-1],
         roundStarter: -1,
-        setsWon: [0, 0, 0, 0]
+        setsWon: [0, 0, 0, 0],
+        trumpBroken: false
       }
       var peopleNamePeople = []
 
