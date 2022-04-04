@@ -1,4 +1,4 @@
-import random
+import torch
 from agents2 import BiddingAgent,  PlayingAgent
 from game import Bridge
 
@@ -7,6 +7,10 @@ bridges     = [Bridge(i) for i in range(4)]
 
 bids = {}
 tot = {}
+
+for i in range(2):
+    checkpoint = torch.load('model/LastChance_Agent'+str(i)+'.pth')
+    agents[i].load_state(checkpoint)
 
 for i in range(1,8):
     for j in range(1,6):
@@ -87,26 +91,32 @@ while game_cnt<10000: # game_cnt < NUMGAMES
     b = Bridge.bidder_num
     c = bridges[b].cards
     
-    '''
+    
+    if printing: print('Partner card:')
     if x < 5:
-        if [x,13] not in c: reward, done, next_player = bridges[b].play_step([x,13])
-        elif [x,12] not in c: reward, done, next_player = bridges[b].play_step([x,12])
-        elif [x,11] not in c: reward, done, next_player = bridges[b].play_step([x,11])
+        if [x,13] not in c:
+            if printing: print([x,13])
+            reward, done, next_player = bridges[b].play_step([x,13])
+        elif [x,12] not in c: 
+            if printing: print([x,12])
+            reward, done, next_player = bridges[b].play_step([x,12])
+        elif [x,11] not in c: 
+            if printing: print([x,11])
+            reward, done, next_player = bridges[b].play_step([x,11])
         else:
             for card in ([4,13],[3,13],[2,13],[1,13],[4,12],[3,12],[2,12],[1,12],[4,11],[3,11],[2,11],[1,11]):
-                if card not in c: reward, done, next_player = bridges[b].play_step(card)
+                if card not in c: 
+                    if printing: print(card)
+                    reward, done, next_player = bridges[b].play_step(card)
+                    break
     else:
         for card in ([4,13],[3,13],[2,13],[1,13],[4,12],[3,12],[2,12],[1,12],[4,11],[3,11],[2,11],[1,11]):
-            if card not in c: reward, done, next_player = bridges[b].play_step(card)
-    '''
-
-    callable_cards = []
-    for i in range(1,5):
-        for j in range(1,14):
-            if [i,j] not in c: callable_cards.append([i,j])
-
-    reward, done, next_player = bridges[b].play_step(callable_cards[random.randrange(39)])
-
+            if card not in c: 
+                if printing: print(card)
+                reward, done, next_player = bridges[b].play_step(card)
+                break
+    
+    if printing: print()
 
     # For other players to check if they are the partner
     bridges[(Bridge.bidder_num + 1)%4].play_step()

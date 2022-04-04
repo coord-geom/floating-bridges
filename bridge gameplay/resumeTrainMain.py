@@ -5,11 +5,15 @@ import torch
 import os
 
 NUMGAMES    = 30000
-TIMERUN     = 33000
+TIMERUN     = 40000
 PRINTCYCLE  = 1000
 
 agents      = [BiddingAgent(), PlayingAgent()]
 bridges     = [Bridge(i) for i in range(4)]
+
+for i in range(2):
+    checkpoint = torch.load('model/LastChance_Agent'+str(i)+'.pth')
+    agents[i].load_state(checkpoint)
 
 bid_states  = [None,None,None,None]
 play_states = [None,None,None,None]
@@ -20,7 +24,7 @@ def check_reshuffle():
             return True
     return False
 
-game_cnt = 0
+game_cnt = 74000
 
 true_start = time.time()
 
@@ -181,4 +185,4 @@ for i in range(2):
     torch.save({
         'model_state_dict': m.state_dict(),
         'optimizer_state_dict': t.optimizer.state_dict()
-    }, 'model/LastChance_Agent'+str(i)+'.pth')
+    }, 'model/ExtendedLastChance_Agent'+str(i)+'.pth')
