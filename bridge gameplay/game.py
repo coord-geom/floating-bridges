@@ -1,4 +1,5 @@
 import random
+import json
 
 ILLEGAL_PENALTY = -1234567890
 
@@ -44,6 +45,10 @@ class Bridge:
     
     all_passed = False
 
+    bids_lst = []
+
+    plays_lst = []
+
 
     # This function initializes the Bridge model
     # and resets all the current settings
@@ -81,6 +86,8 @@ class Bridge:
             Bridge.bid_not_zero = False
             Bridge.game_thrower = None
             Bridge.suits_bid = [[0]*5]*4
+            Bridge.bids_lst = []
+            Bridge.plays_lst = []
 
         self.cards = sorted(Bridge.card_deck[::(4-self.player_num)]) # deal the cards as usual
         self.org_cards = self.cards[:]
@@ -135,6 +142,11 @@ class Bridge:
                 return ILLEGAL_PENALTY, False, self.player_num
 
             self.bid(action)
+
+            if action == [0,0]:
+                Bridge.bids_lst.append(-1)
+            else:
+                Bridge.bids_lst.append(5*(action[0] - 1) + action[1] - 1)
 
             return 0, False, (self.player_num+1)%4
 
@@ -330,6 +342,7 @@ class Bridge:
         # If we have reached the end of the game
         if Bridge.bidder_sets + Bridge.against_sets == 13:
             Bridge.current_phase = Bridge.END_PHASE
+            Bridge.write_to_json()
 
         return winner
 
@@ -353,7 +366,14 @@ class Bridge:
 
         # If you are the last player
         elif (self.player_num+1)%4 == Bridge.next_starter: 
+            prev_starter = Bridge.next_starter
             Bridge.next_starter = self.largest_card(Bridge.past_cards)
+            cards_to_int = []
+            for i in Bridge.past_cards:
+                cards_to_int.append(5 * (i[0] - 1) + i[1] - 1)
+            desc = "Round: " + (len(Bridge.cards_played) / 4) + "\nPlayer " + prev_starter + " starts\nPlayer " + Bridge.next_starter + " wins."
+            play = {'cards': cards_to_int, 'start': prev_starter, 'win': Bridge.next_starter, 'desc': desc}
+            Bridge.plays_lst.append(play)
             Bridge.past_cards = []
 
     def get_rewards(self):
@@ -373,3 +393,22 @@ class Bridge:
                 return non_bid_win[Bridge.bid_number-1] # against side win
             else: 
                 return -(6+Bridge.bid_number-Bridge.bidder_sets)**2 # bidder side lose
+
+    def write_to_json(self):
+        partner_card_to_int = 5 * (Bridge.partner_card[0] - 1) + Bridge.partner_card[1] - 1
+        partner_num = -1
+        for i in range(0,3):
+            if Bridge.bidder_lst[i] == 1 & i != Bridge.bidder_num:
+                partner_num = i
+        winners = []
+        if Bridge.bidder_lst[Bridge.next_starter] == 1:
+            for i in range(0,3):
+                if Bridge.bidder_lst[i] == 1:
+                    winners.append(i)
+        else:
+            for i in range(0,3):
+                if Bridge.bidder_lst[i] == 0:
+                    winners.append(i)
+        data = {'bids': Bridge.bids_lst, 'partner': {'card': partner_card_to_int, 'id': partner_num}, 'plays': Bridge.plays_lst, 'winners': winners}
+        with open('game_data.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
