@@ -370,7 +370,7 @@ class Bridge:
             cards_to_int = []
             for i in Bridge.past_cards:
                 cards_to_int.append(5 * (i[0] - 1) + i[1] - 1)
-            desc = "Round: " + (len(Bridge.cards_played) / 4) + "\nPlayer " + prev_starter + " starts\nPlayer " + Bridge.next_starter + " wins."
+            desc = "Round: " + str(len(Bridge.cards_played) / 4) + "\nPlayer " + str(prev_starter) + " starts\nPlayer " + str(Bridge.next_starter) + " wins."
             play = {'cards': cards_to_int, 'start': prev_starter, 'win': Bridge.next_starter, 'desc': desc}
             Bridge.plays_lst.append(play)
             Bridge.past_cards = []
