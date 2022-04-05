@@ -48,7 +48,7 @@ function MainComponent() {
     })
   }
 
-  const [bgNum, setBgNum] = useState<number>(Math.floor(3*Math.random()))
+  const [bgNum, setBgNum] = useState<number>(Math.floor(4*Math.random()))
 
   const [prevToken, setPrevToken] = useState<[string, string]>(["", ""])
   
@@ -203,7 +203,7 @@ function MainComponent() {
     socket.emit('join-room', room, true, name, id)
     socket.emit("update-room-people", room)
     setBgNum((prev) => {
-      return Math.floor(3*Math.random())
+      return Math.floor(4*Math.random())
     })
   }
 

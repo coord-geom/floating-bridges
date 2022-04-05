@@ -416,7 +416,7 @@ const AppRoom:FC<AppRoomProps> = (props) => {
 
   /** PAGEBREAK return statement **/
 
-  const backgroundImages = [require("./sprites/gameBG1.png"), require("./sprites/gameBG2.png"), require("./sprites/gameBG3.png")]
+  const backgroundImages = [require("./sprites/gameBG1.png"), require("./sprites/gameBG2.png"), require("./sprites/gameBG3.png"), require("./sprites/gameBG4.png")]
   return (
     <div className='blackBG'>
       <img className='background-image-dim' src={backgroundImages[props.bgNum]} alt="backgroundImage" />
