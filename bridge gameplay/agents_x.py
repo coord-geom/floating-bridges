@@ -1,19 +1,18 @@
 import torch
 import numpy as np
 import random
-from model2 import Linear_QNet, QTrainer
+from model_x import Linear_QNet, QTrainer
 from collections import deque
-from game import Bridge
 
-BATCH_SIZE = 10000
-MAX_MEMORY = 1000000
-LR = 0.001
+BATCH_SIZE = 1000
+MAX_MEMORY = 100000
+LR = 0.0003
 
 class Agent:
     def __init__(self):
         self.epsilon = 1
         self.eps_min = 0.01
-        self.eps_dec = 0.00001
+        self.eps_dec = 0.0005
         self.gamma   = 0.9
         self.memory  = deque(maxlen=MAX_MEMORY)
 
@@ -47,23 +46,25 @@ class BiddingAgent(Agent):
 
     def __init__(self):
         super().__init__()
-        self.model   = Linear_QNet(69,82,36)
+        self.model   = Linear_QNet(69,82,82,36)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
     
     def get_state(self, game):
         state = []
 
+        # Cards in player's hand
         played = [0]*52
         for c in game.cards:
             played[(c[0]-1)*13+(c[1]-1)] = 1
         state.extend(played)
 
-        suits_bid = Bridge.suits_bid
+        # Suits bid by others
+        suits_bid = game.suits_bid
         for i in range(1,4):
-            id = (game.player_num+i)%4
-            state.extend(suits_bid[id])
+            state.extend(suits_bid[(game.player_num+i)%4])
         
-        state.extend([Bridge.last_number, Bridge.last_suit])
+        # Current bid
+        state.extend([game.last_number, game.last_suit])
 
         return state
 
@@ -73,7 +74,11 @@ class BiddingAgent(Agent):
             s = torch.tensor(state)
             s = s.type(torch.float32)
             x = self.model(s)
-            move = torch.argmax(x).item()
+            if game.last_number == 0: move = torch.argmax(x).item()
+            else:
+                a = game.last_number
+                b = game.last_bid
+                move = torch.argmax(torch.cat(x[0:1],x[(a-1)*5+b:-1]))
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
             return BiddingAgent.OUTPUT_MAP[move]
         else:
@@ -94,33 +99,36 @@ class BiddingAgent(Agent):
 
         return bids[random.randrange(len(bids))]
     
-    def load_state(self, checkpoint):
-        self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.trainer.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    def load_model(self, filepath):
+        self.model.load(filepath)
         self.model.eval()
 
 class PlayingAgent(Agent):
 
     def __init__(self):
         super().__init__()
-        self.model   = Linear_QNet(130,100,13)
+        self.model   = Linear_QNet(130,100,100,13)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
     
     def get_state(self, game):
         state = []
 
+        # Cards in player's hand
         played = [0]*52
         for c in game.cards:
             played[(c[0]-1)*13+(c[1]-1)] = 1
         state.extend(played)
 
-        suits_bid = Bridge.suits_bid
+        # Suits bid by others
+        suits_bid = game.suits_bid
         for i in range(1,4):
             id = (game.player_num+i)%4
             state.extend(suits_bid[id])
         
-        state.append(Bridge.last_suit)
+        # Trump suit
+        state.append(game.bid_suit)
 
+        # Partner card
         state.extend(game.partner_card)
 
         # partner
@@ -128,7 +136,7 @@ class PlayingAgent(Agent):
         else: state.append(0)
 
         # last 3 cards played
-        past_cards = Bridge.past_cards
+        past_cards = game.past_cards
         if len(past_cards) == 3:
             for c in past_cards:
                 state.extend(c)
@@ -140,11 +148,13 @@ class PlayingAgent(Agent):
                     state.extend([0,0])
         
         # trump broken
-        if Bridge.trump_broken: state.append(1)
+        if game.trump_broken: state.append(1)
         else: state.append(0)
 
+
+        # Cards already played out
         played = [0]*52
-        for c in Bridge.cards_played:
+        for c in game.cards_played:
             played[(c[0]-1)*13+(c[1]-1)] = 1
         state.extend(played)
 
@@ -156,6 +166,7 @@ class PlayingAgent(Agent):
             s = s.type(torch.float32)
             x = self.model(s)
             move = torch.argmax(x).item()
+            
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
             return game.org_cards[move]
         else:
@@ -169,7 +180,6 @@ class PlayingAgent(Agent):
                 valid.append(card)
         return valid[random.randrange(len(valid))]
 
-    def load_state(self, checkpoint):
-        self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.trainer.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    def load_model(self, filepath):
+        self.model.load(filepath)
         self.model.eval()

@@ -17,7 +17,7 @@ for i in range(2):
     checkpoint = torch.load('model/ExtendedLastChance_Agent'+str(i)+'.pth')
     agents[i].load_state(checkpoint)
     agents[i].epsilon = Agent().eps_min
-    
+
 for i in range(1,8):
     for j in range(1,6):
         bids[(i,j)] = 0
@@ -35,10 +35,9 @@ bidder_win_cnt = 0
 total_bid_sets = 0
 total_against_sets = 0
 illegal_cnt = 0
-
 printing = False
 
-while game_cnt<1000: # game_cnt < NUMGAMES
+while game_cnt<100: # game_cnt < NUMGAMES
 
     next_player = game_cnt % 4
     old_player = next_player
@@ -62,9 +61,9 @@ while game_cnt<1000: # game_cnt < NUMGAMES
         id      = next_player
         old_player = next_player
 
-        state   = agents[0].get_state(bridge)
+        state = agents[0].get_state(bridge)
 
-        move = agents[0].explore(bridge)
+        move = agents[0].get_action(state, bridge)
 
         if printing: print(next_player,move)
         
@@ -150,7 +149,7 @@ while game_cnt<1000: # game_cnt < NUMGAMES
 
         state   = agents[1].get_state(bridge)
         
-        move = agents[1].explore(bridge)
+        move = agents[1].get_action(state, bridge)
 
         if printing: 
             if Bridge.bidder_num == next_player:
@@ -164,8 +163,7 @@ while game_cnt<1000: # game_cnt < NUMGAMES
 
         if old_player == next_player:
             repeat_cnt += 1
-            illegal_cnt += 1
-    
+            illegal_cnt += 1    
     # Delegate rewards to agents
     bn = Bridge.bidder_num
 
@@ -174,23 +172,23 @@ while game_cnt<1000: # game_cnt < NUMGAMES
     #print('Game',game_cnt)
     #print('Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
     if Bridge.bidder_sets >= 6 + Bridge.bid_number:
-        #print('Win Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
+        print('Win Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
         if printing: print(Bridge.bidder_sets,'Bidder win')
         bidder_win_cnt += 1
         bids[(Bridge.bid_number,Bridge.bid_suit)] += 1
     else:
         if printing: print(Bridge.bidder_sets,'Bidder lose')
-        #print('Lose Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
+        print('Lose Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
         pass
-    total_bid_sets += Bridge.bidder_sets
-    total_against_sets += 13 - Bridge.bidder_sets
-    game_data = bridge.write_to_json()
-    games.append(game_data)
+    #game_data = bridge.write_to_json()
+    #games.append(game_data)
 
     if game_cnt%1000 == 0:
         print(game_cnt/100,'% done')
 
     bridges = [Bridge(i) for i in range(4)]
+
+
     bid_states = [None,None,None,None]
     call_state = []
     play_states = [None,None,None,None]
@@ -205,10 +203,12 @@ bids_list_keys = []
 bids_list = []
 bids_list_with_suits = []
 
+
+'''
 for i in range(1,8):
     suit_bids = []
     for j in range(1,6):
-        bids_list_keys.append("(" + str(i) + "," + str(j) + ")")
+        bids_list_keys.append(((i,j)))
         if tot[(i,j)] != 0:
             prop[(i,j)] = bids[(i,j)]/tot[(i,j)]
             bids_list.append(prop[(i,j)])
@@ -218,50 +218,23 @@ for i in range(1,8):
             bids_list.append(0)
             suit_bids.append(0)
     bids_list_with_suits.append(suit_bids)
-bids_df = pd.DataFrame(bids_list_with_suits, columns = ["club","diamond","heart","spade","no_trump"])
-bids_df = bids_df.rename(index={0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7})
+bids_df = pd.DataFrame(bids_list_with_suits, columns = [1,2,3,4,5,6,7,8])
+bids_df.rename(index={0: "club", 1: "diamond", 2: "heart", 3: "spade"})
 
 plt.figure()
-x = ["bidders","non-bidders"]
-win_rate_y = [bidder_win_cnt * 100 /game_cnt, (game_cnt - bidder_win_cnt) * 100 /game_cnt]
-sns.barplot(x, win_rate_y, color='r')
-plt.title("Win rate")
-plt.show()
-
-plt.figure()
-total_sets = total_bid_sets + total_against_sets
-sets_y = [total_bid_sets * 100 / total_sets, total_against_sets * 100 / total_sets]
-sns.barplot(x,sets_y, color='b')
-plt.title("Percentage of sets won")
-plt.show()
-
-plt.figure()
-sns.lineplot(bids_list_keys, bids_list).set(xticklabels=[])
+sns.lineplot(bids_list_keys, bids_list)
 plt.xlabel("bids")
 plt.ylabel("percentage")
-plt.title("Percentage of each bid")
 plt.show()
 
 print(bids_df)
 
-bids_df = 100 * bids_df
-plt.figure()
-sns.barplot(bids_df.mean(axis=1).index, bids_df.mean(axis=1).values)
-plt.title("Percentage of each bid number")
-plt.show()
-
-plt.figure()
-sns.barplot(bids_df.mean(axis=0).index, bids_df.mean(axis=0).values)
-plt.title("Percentage of each bid suit")
-plt.show()
-
-print("Percentage of illegal moves: " + str(100 * illegal_cnt / (illegal_cnt + 130000)) + "%")
 # print(prop)
 
 games_dict = {'games': games}
 with open('game_data.json', 'w', encoding='utf-8') as f:
     json.dump(games_dict, f, ensure_ascii=False, indent=4)
-
+'''
 
 # bids_list_with_suits = []
 # for i in range(1,8):

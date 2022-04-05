@@ -85,7 +85,6 @@ class Bridge:
             Bridge.all_passed = False
             Bridge.cards_played = []
             Bridge.bid_not_zero = False
-            Bridge.game_thrower = None
             Bridge.suits_bid = [[0]*5]*4
             Bridge.bids_lst = []
             Bridge.plays_lst = []
@@ -95,9 +94,7 @@ class Bridge:
         for card in self.cards:
             Bridge.card_deck.remove(card)
 
-        self.turn_num = self.player_num # set player num in order of playing
         self.bidder_side = False
-        self.sets_won = 0
 
     
 
