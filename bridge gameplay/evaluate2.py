@@ -31,7 +31,7 @@ bidder_win_cnt = 0
 
 printing = False
 
-while game_cnt<10000: # game_cnt < NUMGAMES
+while game_cnt<100000: # game_cnt < NUMGAMES
 
     next_player = game_cnt % 4
     old_player = next_player
