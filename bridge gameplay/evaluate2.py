@@ -31,7 +31,11 @@ bidder_win_cnt = 0
 
 printing = False
 
+<<<<<<< HEAD
 while game_cnt<100: # game_cnt < NUMGAMES
+=======
+while game_cnt<100000: # game_cnt < NUMGAMES
+>>>>>>> 6aff9a6b3ae6a820d5bcdb9520db80351b40225d
 
     next_player = game_cnt % 4
     old_player = next_player
