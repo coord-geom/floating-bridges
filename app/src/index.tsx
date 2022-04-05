@@ -7,6 +7,7 @@ import DisplayRuns, { roundInfo } from './DisplayRunScreen';
 import reportWebVitals from './reportWebVitals';
 import {io} from 'socket.io-client'
 import { useEffect } from "react";
+import dataJson from './game_data.json';
 
 export const socket = io('http://localhost:3000') //the webpage which the server is hosted on
 
@@ -31,190 +32,44 @@ function MainComponent() {
     []
   ) 
   const [prevToken, setPrevToken] = useState<[string, string]>(["", ""])
-
-  const genGamePlay = () => {
-    var out = []
-    for (var i = 0; i < 13; ++i){
-      out.push({
-        cards: [0, 0, 0, 0],
-        start: 0,
-        win: 0,
-        desc: "Round " + i + "\nPlayer 1 starts\nPlayer 1 wins"
-      })
-    }
-    return out
-  }
   
+  const getNewGame = () => {
+    const allGames = dataJson.games
+    return allGames[Math.floor( (allGames.length)*Math.random() )]
+  }
 
   const [gamePlayInfo, setGamePlayInfo] = useState<roundInfo>(
-    {
-      "bids": [
-          3,
-          4,
-          -1,
-          -1,
-          -1
-      ],
-      "partner": {
-          "card": 51,
-          "id": 3
-      },
-      "plays": [
-          {
-              "cards": [
-                  21,
-                  19,
-                  48,
-                  22
-              ],
-              "start": 0,
-              "win": 3,
-              "desc": "Round: 1\nPlayer 1 starts\nPlayer 4 wins."
-          },
-          {
-              "cards": [
-                  40,
-                  47,
-                  45,
-                  43
-              ],
-              "start": 3,
-              "win": 0,
-              "desc": "Round: 2\nPlayer 4 starts\nPlayer 1 wins."
-          },
-          {
-              "cards": [
-                  18,
-                  20,
-                  37,
-                  23
-              ],
-              "start": 0,
-              "win": 3,
-              "desc": "Round: 3\nPlayer 1 starts\nPlayer 4 wins."
-          },
-          {
-              "cards": [
-                  32,
-                  29,
-                  28,
-                  30
-              ],
-              "start": 3,
-              "win": 3,
-              "desc": "Round: 4\nPlayer 4 starts\nPlayer 4 wins."
-          },
-          {
-              "cards": [
-                  42,
-                  39,
-                  49,
-                  5
-              ],
-              "start": 3,
-              "win": 1,
-              "desc": "Round: 5\nPlayer 4 starts\nPlayer 2 wins."
-          },
-          {
-              "cards": [
-                  41,
-                  7,
-                  51,
-                  44
-              ],
-              "start": 1,
-              "win": 3,
-              "desc": "Round: 6\nPlayer 2 starts\nPlayer 4 wins."
-          },
-          {
-              "cards": [
-                  1,
-                  3,
-                  8,
-                  0
-              ],
-              "start": 3,
-              "win": 1,
-              "desc": "Round: 7\nPlayer 4 starts\nPlayer 2 wins."
-          },
-          {
-              "cards": [
-                  34,
-                  27,
-                  26,
-                  36
-              ],
-              "start": 1,
-              "win": 0,
-              "desc": "Round: 8\nPlayer 2 starts\nPlayer 1 wins."
-          },
-          {
-              "cards": [
-                  14,
-                  15,
-                  6,
-                  25
-              ],
-              "start": 0,
-              "win": 3,
-              "desc": "Round: 9\nPlayer 1 starts\nPlayer 4 wins."
-          },
-          {
-              "cards": [
-                  12,
-                  33,
-                  13,
-                  2
-              ],
-              "start": 3,
-              "win": 3,
-              "desc": "Round: 10\nPlayer 4 starts\nPlayer 4 wins."
-          },
-          {
-              "cards": [
-                  50,
-                  17,
-                  46,
-                  4
-              ],
-              "start": 3,
-              "win": 3,
-              "desc": "Round: 11\nPlayer 4 starts\nPlayer 4 wins."
-          },
-          {
-              "cards": [
-                  11,
-                  24,
-                  16,
-                  10
-              ],
-              "start": 3,
-              "win": 3,
-              "desc": "Round: 12\nPlayer 4 starts\nPlayer 4 wins."
-          },
-          {
-              "cards": [
-                  35,
-                  31,
-                  38,
-                  9
-              ],
-              "start": 3,
-              "win": 1,
-              "desc": "Round: 13\nPlayer 4 starts\nPlayer 2 wins."
-          }
-      ],
-      "winners": [
-          1,
-          2
-      ]
-  }
+    getNewGame()
   )
   
 
   const afterJoinRoom = (room:string) => () => {
     socket.emit('join-room', room, true, name, id)
     socket.emit("update-room-people", room)
+  }
+
+  const exitRoom = () => {  
+    const roomTemp = roomCode
+    const idExit = id
+    const message =  name + " has left the room!"
+    const token = makeid(16)
+    socket.emit("message-send", message, roomTemp, token)
+    socket.emit('leave-room', roomTemp, idExit)
+    setRoomCode((prev) => {
+      return ""
+    })
+    setName((prev) => {
+      return ""
+    })
+    setId((prev) => {
+      return -1
+    })
+    setInRoom((prev) => {
+      return false
+    })
+    setSideMessages((prev) => {
+      return []
+    })
   }
 
   const setInfor = (room: string, name:string, id:number) => {
@@ -235,30 +90,7 @@ function MainComponent() {
 
   const newGame = () => {
     setGamePlayInfo((prev) => {
-      return {
-        bids: Array.from({length: 40}, () => Math.floor(Math.random() * 15)),
-        partner: {
-          card: 0,   
-          id: 0       
-        },         
-        plays: [{
-          cards: [0, 1, 2, 3],
-          start: 0,
-          win: 1,
-          desc: "Round " + 1 + "\nPlayer 1 starts\nPlayer 1 wins"
-        },{
-          cards: [4,5,6,7],
-          start: 0,
-          win: 1,
-          desc: "Round " + 1 + "\nPlayer 1 starts\nPlayer 1 wins"
-        },{
-          cards: [8,9,10,11],
-          start: 0,
-          win: 1,
-          desc: "Round " + 1 + "\nPlayer 1 starts\nPlayer 1 wins"
-        }],
-        winners:[0, 3]
-      }
+      return getNewGame()
     })
   }
 
@@ -270,7 +102,7 @@ function MainComponent() {
   }
 
   useEffect(() => {
-    afterJoinRoom(roomCode)
+    afterJoinRoom(roomCode)()
   }, [inRoom, roomCode, name, id])
 
   const disconnect = () => {
@@ -320,7 +152,8 @@ function MainComponent() {
     return <JoinRoom setInfor={setInfor} setDisplayRuns={setDisplayRuns(true)}/>
   }
   else {
-    return <AppRoom roomCode={roomCode} name={name} id={id} sideMessages={sideMessages} addMessage={addMessage}/>
+    return <AppRoom roomCode={roomCode} name={name} id={id} sideMessages={sideMessages} 
+    addMessage={addMessage} leaveRoom={exitRoom}/>
   }
 }
 

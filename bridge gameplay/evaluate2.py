@@ -2,6 +2,9 @@ import torch
 from agents2 import BiddingAgent,  PlayingAgent
 from game import Bridge
 import json
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 agents      = [BiddingAgent(), PlayingAgent()]
 bridges     = [Bridge(i) for i in range(4)]
@@ -190,16 +193,46 @@ print(tot)
 
 
 prop = {}
+bids_list_keys = []
+bids_list = []
+bids_list_with_suits = []
 
 for i in range(1,8):
+    suit_bids = []
     for j in range(1,6):
+        bids_list_keys.append(i,j)
         if tot[(i,j)] != 0:
             prop[(i,j)] = bids[(i,j)]/tot[(i,j)]
+            bids_list.append(prop[(i,j)])
+            suit_bids.append(prop[(i,j)])
         else:
             prop[(i,j)] = 'NIL'
+            bids_list.append(0)
+            suit_bids.append(0)
+    bids_list_with_suits.append(suit_bids)
+bids_df = pd.DataFrame(bids_list_with_suits, columns = [1,2,3,4,5,6,7,8])
+bids_df.rename(index={0: "club", 1: "diamond", 2: "heart", 3: "spade"})
 
-print(prop)
+plt.figure()
+sns.lineplot(bids_list_keys, bids_list)
+plt.xlabel("bids")
+plt.ylabel("percentage")
+plt.show()
+
+print(bids_df)
+
+# print(prop)
 
 games_dict = {'games': games}
 with open('game_data.json', 'w', encoding='utf-8') as f:
     json.dump(games_dict, f, ensure_ascii=False, indent=4)
+
+
+# bids_list_with_suits = []
+# for i in range(1,8):
+#     suit_bids = []
+#     for j in range(1,6):
+#         suit_bids.append(prop[(i,j)])
+#     bids_list_with_suits.append(suit_bids)
+# bids_df = pd.DataFrame(bids_list_with_suits, columns = [1,2,3,4,5,6,7,8])
+# bids_df.rename(index={0: "club", 1: "diamond", 2: "heart", 3: "spade"})

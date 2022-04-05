@@ -180,6 +180,7 @@ interface SideBarProps {
   messageRef: React.RefObject<HTMLInputElement>
   bidRef: React.RefObject<HTMLSelectElement>
   biddingPhase: boolean
+  leaveRoom: () => void
 }
 
 export const SideBar:FC<SideBarProps> = (props) => {  
@@ -241,9 +242,15 @@ export const SideBar:FC<SideBarProps> = (props) => {
           {props.biddingPhase ? "Sumbit Bid!" : "Select Partner!"}
         </button>
       </div>
+      <div className='flex-row'>
       <button onClick={props.startGame} className='sidebar-button' disabled={!props.startGameBool}>
         Start Game!
       </button>
+      <button onClick={props.leaveRoom} className='sidebar-button'>
+        Leave Room!
+      </button>
+      </div>
+      
     </div>
   )
 }
@@ -259,6 +266,7 @@ interface AppRoomProps{
   id: number;
   sideMessages: [string,string][];
   addMessage: (message:string, token:string) => void
+  leaveRoom: () => void
 }
 
 /* I know that this is very bad coding practice, but bear with me here. All the functions that have to do with 
@@ -529,7 +537,7 @@ const AppRoom:FC<AppRoomProps> = (props) => {
       <InfoTable setsWon={5} partner={partner === 3} breakTrump={false} trump={trump} playerPos={3} name={roomPeople[(playerNum+3)%4][0]}/>
       <SideBar sendMessage={sendMessage} sendBid={sendBid} startGame={startGame} startGameBool={false}
       allowBid={canBid} messages={props.sideMessages} roomCode={props.roomCode} messageRef={messageRef} bidRef={bidRef} 
-      biddingPhase={true}/>
+      biddingPhase={true} leaveRoom={props.leaveRoom}/>
     </div>
   )
 }

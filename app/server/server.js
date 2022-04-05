@@ -57,7 +57,7 @@ io.on('connection', socket => {
       peopleName.people = peopleNamePeople
       roomPeople.set(room, peopleName)
       //console.log("Calling from join room; roomPeoples is:")
-      //console.log(roomPeople)
+      //console.log(roomPeople) 
 
       console.log("peopleName is: " + JSON.stringify(peopleName))
       console.log("peopleName.people is: " + JSON.stringify(peopleNamePeople))
@@ -68,26 +68,50 @@ io.on('connection', socket => {
   })
 
   // TODO: change these
-  socket.on('leave-room', (room, joinTrue, name, id) => {
-    if (joinTrue) {
-      socket.join(room)
-
-      console.log("I am calling this from the top of joinroom")
-
-      var peopleName = []
-      for (var i = 0; i < 4; ++i){
-        peopleName.push(['', i])
-      }
-      if (roomPeople.get(room) !== undefined){
-        peopleName = roomPeople.get(room)
-      }
-      peopleName[id] = [name, id]
-      roomPeople.set(room, peopleName, socket.id)
-      console.log("Calling from join room; roomPeoples is:")
-      console.log(roomPeople)
-      console.log(peopleName)
-      socket.to(room).emit("provide-people-name", roomPeople.get(room))
+  socket.on('leave-room', (room, id) => {
+    socket.leave(room)
+    
+    var peopleName = {
+      people: [],
+      roomState: 0, //0 for not started; 1 for bidding; 2 for partner; 3 for game
+      hand: [],
+      bids: [],
+      bid: [0, 0], //suit, bid
+      partners: [0, 0],
+      cardsPlayed: [-1,-1,-1,-1],
+      roundStarter: -1,
+      setsWon: [0, 0, 0, 0],
+      trumpBroken: false
     }
+    var peopleNamePeople = []
+
+    for (var i = 0; i < 4; ++i){
+      peopleNamePeople.push(['', i, ''])
+    }
+    if (roomPeople.get(room) !== undefined){
+      peopleName = roomPeople.get(room)
+      peopleNamePeople = peopleName.people.slice(0,4)
+    }
+    for (var i = id; i < 4; ++i){
+      if (i < 3){
+        peopleNamePeople[i][0] = peopleNamePeople[i+1][0]
+        peopleNamePeople[i][1] = id
+        peopleNamePeople[i][2] = peopleNamePeople[i+1][2]
+      } else {
+        peopleNamePeople[i] = ['', i, '']
+      }
+      console.log(peopleNamePeople)
+    }
+    peopleName.people = peopleNamePeople
+    roomPeople.set(room, peopleName)
+    //console.log("Calling from join room; roomPeoples is:")
+    //console.log(roomPeople)
+
+    console.log("peopleName is: " + JSON.stringify(peopleName))
+    console.log("peopleName.people is: " + JSON.stringify(peopleNamePeople))
+    console.log("roomPeople is: " + JSON.stringify(roomPeople))
+    console.log(room)
+    socket.to(room).emit("provide-people-name", roomPeople.get(room)?.people)
   }) 
 
 
