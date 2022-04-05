@@ -23,6 +23,23 @@ const roomPeople = new Map();
 
 const messageTokens = [];
 
+const makeid = (length) => {
+  var result           = '';
+  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+ return result;
+}
+
+const getStringBid = (id)=>{
+  const bidSuits = ["Club", "Diamond", "Heart", "Spade", "No Trump"]
+  if (id === 0) return "Pass"
+  return Math.ceil(id/5) + " " + bidSuits[(id-1) % 5]
+  
+}
+
 io.on('connection', socket => {
   console.log("User " + socket.id + " has connected")
 
@@ -36,9 +53,9 @@ io.on('connection', socket => {
         people: [],
         roomState: 0, //0 for not started; 1 for bidding; 2 for partner; 3 for game
         hand: [],
-        bids: [],
-        bid: [0, 0], //suit, bid
-        partners: [0, 0],
+        bid: [-1,-1],
+        bids: [], //suit, bid
+        partners: [-1, -1],
         cardsPlayed: [-1,-1,-1,-1],
         roundStarter: -1,
         setsWon: [0, 0, 0, 0],
@@ -67,7 +84,6 @@ io.on('connection', socket => {
     }
   })
 
-  // TODO: change these
   socket.on('leave-room', (room, id) => {
     socket.leave(room)
     
@@ -139,7 +155,7 @@ io.on('connection', socket => {
     }
   })
 
-  socket.on("start-game", (room) => {
+  socket.on("start-game", (room, setData) => {
     const shuffle = (array) => {
       let currentIndex = array.length,  randomIndex;
   
@@ -211,23 +227,83 @@ io.on('connection', socket => {
 
     const roomStateExport = {
       roomState: roomPeople.get(room).roomState,
-      bids: roomPeople.get(room).bids,
+      bid: roomPeople.get(room).bid,
       partners: roomPeople.get(room).partners,
       cardsPlayed: roomPeople.get(room).cardsPlayed,
       setsWon: roomPeople.get(room).setsWon
-    }
+    } 
 
     
     
     console.log(roomStateExport)
     socket.in(room).emit("send-data", roomStateExport)
+    setData(roomStateExport, allCards[0])
 
     for (var i = 0; i < 4; ++i){
+      if (i === 0) {
+        continue
+      }
       console.log(roomPeople.get(room).people[i][2])
       console.log(allCards[i])
       console.log(roomPeople)
       socket.to(roomPeople.get(room).people[i][2]).emit("send-cards", allCards[i])
     }
+  })
+
+  socket.on("send-bid", (bid, player, room, addMessage) => {
+    console.log(bid)
+    console.log(player)
+    const message = "Player " + (player + 1) + " bid " + getStringBid(bid)
+    const token = makeid(16)
+    const oldBids = roomPeople.get(room).bids
+    oldBids.push(bid)
+
+    roomPeople.get(room).bids = oldBids
+    
+    // check for 1 round of passes 
+
+    console.log(oldBids)
+    
+    var isFinished = false
+    if (oldBids.length >= 4){
+      isFinished = true
+      for (var i = 0; i < 3; ++i){
+        if (oldBids[oldBids.length-1-i] !== 0){
+          isFinished = false
+          break
+        }
+      }
+    }
+
+    console.log(isFinished)
+
+    if (bid !== 0){
+      roomPeople.get(room).bid = [Math.floor((bid+1)/5),(bid+1)%5]
+    }
+
+    const roomStateExport = {
+      roomState: roomPeople.get(room).roomState,
+      bid: roomPeople.get(room).bid,
+      partners: roomPeople.get(room).partners,
+      cardsPlayed: roomPeople.get(room).cardsPlayed,
+      setsWon: roomPeople.get(room).setsWon
+    } 
+    console.log(roomStateExport)
+
+    if (isFinished) { //Closing up; move to next phase
+      const message2 = message + ". Player " + (player + 1) + ", please call your partner."
+      addMessage(message2, token, true, roomStateExport)
+      socket.to(room).emit("message-recieve", message2, token)
+      socket.to(room).emit("get-bid", (player+1)%4)
+      socket.in(room).emit("send-data", roomStateExport)
+    }
+    else{
+      addMessage(message, token, true, roomStateExport)
+      socket.to(room).emit("message-recieve", message, token)
+      socket.to(room).emit("get-bid", (player+1)%4)
+      socket.in(room).emit("send-data", roomStateExport)
+    }
+    
   })
 
   /**

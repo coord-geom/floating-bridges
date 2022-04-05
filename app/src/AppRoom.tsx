@@ -282,128 +282,38 @@ interface AppRoomProps{
   cardLst: number[]
   updateCardLst: (updateCardLst: number[]) => void
   bgNum: number
+  startGame: () => void
+
+
+  cardList: number[]
+  selLst: boolean[]
+  handleClickCard: (index:number) => void
+  handleClickSubmit: () => number
+  trump: number
+
+  currBidder: number
+  setPlayerDataWith: (playerData:roomStatePublic) => void
+  setCurrBidderWith: (id:number) => void
 }
 
 /* I know that this is very bad coding practice, but bear with me here. All the functions that have to do with 
  * the main game be situated here. To toggle between sections, just search the word `PAGEBREAK`*/
 const AppRoom:FC<AppRoomProps> = (props) => {
+  console.log(props.playerData)
+  console.log(props.currBidder)
   const messageRef = createRef<HTMLInputElement>()
   const bidRef = createRef<HTMLSelectElement>()
   /** PAGEBREAK Functions that have to do with initializing the players cards **/
   var [playerNum, setPlayerNum] = useState<number>((props.id+1)%4) 
 
-  const [breakTrump, setBreakTrump] = useState<boolean> (false)
-
-  const trump = props.playerData.bid[0]
-
   /** States and Functions which have to do with the user's hand **/
-  const [cardList, setCardList] = useState<number[]>(
-    props.cardLst
-    //[...cardInitList]
-  )
-
   const [bidList, setBidList] = useState<number[][]>(
     [[]]
-  )
+  )  
+
   
-  const [selLst, setSelLst] = useState<cardSelected[]>(
-    Array(cardList.length).fill(false)
-  )
 
-  const [numCards, setNumCards] = useState<number>(props.cardLst.length)
-
-  const updateSelected = (cardNum: number) => {
-    // If neg, we treat it as remove 1 
-    if (cardNum < 0){
-      setSelLst((prev) => {
-        for (var i in prev){
-          prev[i] = false
-        }
-        prev.splice(0,1)
-        return [...prev]
-      })
-    }
-
-    setSelLst((prev) => {
-      for (var i in prev){
-        prev[i] = false
-      }
-      prev[cardNum] = true
-      return [...prev]
-    })
-  }
-  
-  const handleClickCard = (index:number) => {
-    updateSelected(index)
-  }
-
-  const checkValidCard = (cardToPlay:number, trump:number, breakTrump:boolean, firstCard:number, hand:number[]) => {
-    // We define the params as follows:
-    // cardToPlay: the card which we wish to check the legality of.
-    // trump: the trump suit 
-    // breakTrump: whether the trump has been broken yet or not. 
-    // firstCard: the firstCard played. If the current player is to play the next card, this value will be negative
-
-    const cardToPlaySuit = Math.floor(cardToPlay/13)
-
-    if (firstCard < 0){
-      //current player is to play the next card
-      if (breakTrump) return true
-      else {
-        return (cardToPlaySuit !== trump)
-      }
-    }
-    else{
-      const firstCardSuit = Math.floor(firstCard/13)
-      if (cardToPlaySuit === firstCardSuit) return true
-      else{
-        //the suit is different! Check for other cards in the hand which are legal. 
-        for (var i = 0; i < hand.length; ++i){
-          if (Math.floor(hand[i]/13) === firstCardSuit) return false
-        } 
-        return true
-      }
-    }
-  }
-
-  // This function removes the selected card, if any, and outputs the card num of the removed card. 
-  // TODO this function will have to be changed to communicate with the server
-  const handleClickSubmit = () => {
-    var selected = -1
-    for (var i = 0; i < selLst.length; ++i){
-      if (selLst[i]) selected = i
-    }
-
-    if (selected === -1){
-      // eslint-disable-next-line no-restricted-globals
-      confirm("Please Select a Card!")
-      return -1
-    }
-    else if (!checkValidCard(cardList[selected], trump, breakTrump, -1, cardList)){
-      // eslint-disable-next-line no-restricted-globals
-      confirm("This card is not legal to play!")
-      return -1
-    }
-    else {
-      const cardRemoved = cardList[selected]
-
-      setCardList((prev) => {
-        if (prev.length === numCards){
-          prev.splice(selected, 1)
-          setNumCards((prev) =>{ return prev-1})
-          updateSelected(-1)
-          return [...prev]
-        }
-        return prev        
-      })
-      
-      return cardRemoved
-    }
-  }
-
-  useEffect(() => {
-    props.updateCardLst(cardList)
-  }, [cardList])
+ 
 
   /** The other players info. Again, this will need to be updated when you start building the server. **/
   const [partner, setPartner] = useState<number>(
@@ -437,10 +347,6 @@ const AppRoom:FC<AppRoomProps> = (props) => {
   )
 
   /** Side Bar OnClick functions.**/
-  const [canBid, setCanBid] = useState<boolean> (
-    (props.playerData.roomState === 1) || (props.playerData.roomState === 2)
-  ) //change to false later
-
   const [roomPeople, setRoomPeople] = useState<[string, number, string][]> (
     [['', 0, ''], ['', 1, ''], ['', 2, ''], ['', 3, '']]
   ) 
@@ -455,11 +361,33 @@ const AppRoom:FC<AppRoomProps> = (props) => {
   }
 
   const sendBid = () => {
+    const bidValString = bidRef.current?.value
+    if (bidValString === null || bidValString === undefined){
+      // eslint-disable-next-line no-restricted-globals
+      confirm("Please Select a Bid!")
+      return;
+    }
+    const bid = parseInt(bidValString)
+    const currBid = props.playerData.bid[0]*5 + props.playerData.bid[1] - 1
+    console.log(bid)
+    console.log(currBid)
+    if ((bid === -1 || bid <= currBid) && bid !== 0){
+      // eslint-disable-next-line no-restricted-globals
+      confirm("Please Select a Valid Bid!")
+      return;
+    }
+    const player = props.id
+    const roomID = props.roomCode
 
-  }
+    const addMessageAndUpdate = (message:string, token:string, hasState:boolean, state?:roomStatePublic) => {
+      props.setCurrBidderWith((player + 1)%4)
+      props.addMessage(message, token)
+      if (!hasState && state !== undefined){
+        props.setPlayerDataWith(state)
+      }
+    }
 
-  const startGame = () => {
-    socket.emit("start-game", props.roomCode)
+    socket.emit("send-bid", bid, player, roomID, addMessageAndUpdate)
   }
 
   useEffect(() => {
@@ -493,11 +421,11 @@ const AppRoom:FC<AppRoomProps> = (props) => {
     <div className='blackBG'>
       <img className='background-image-dim' src={backgroundImages[props.bgNum]} alt="backgroundImage" />
       <Hand 
-        cardLst={cardList}
-        selLst={selLst}
+        cardLst={props.cardList}
+        selLst={props.selLst}
         playerNum={playerNum}
-        handleClickCard={handleClickCard}
-        handleClickSubmit={handleClickSubmit}
+        handleClickCard={props.handleClickCard}
+        handleClickSubmit={props.handleClickSubmit}
       />
       <OthHand side={2} numCards={13} partner={partner === 2}/>
       <OthHandSide side={1} numCards={13}  partner={partner === 1}/>
@@ -509,17 +437,18 @@ const AppRoom:FC<AppRoomProps> = (props) => {
         handleClickCard={() => {}}
         handleClickSubmit={() => {return 69420}}
       />
-      <InfoTable setsWon={props.playerData.setsWon[playerNum]}       partner={true} breakTrump={false} trump={trump} playerPos={0} 
+      <InfoTable setsWon={props.playerData.setsWon[playerNum]}       partner={true} breakTrump={false} trump={props.trump} playerPos={0} 
             name={props.name}/>
-      <InfoTable setsWon={props.playerData.setsWon[(playerNum+1)%4]} partner={partner === 1} breakTrump={false} trump={trump} playerPos={1} 
+      <InfoTable setsWon={props.playerData.setsWon[(playerNum+1)%4]} partner={partner === 1} breakTrump={false} trump={props.trump} playerPos={1} 
             name={roomPeople[(playerNum+1)%4][0]}/>
-      <InfoTable setsWon={props.playerData.setsWon[(playerNum+2)%4]} partner={partner === 2} breakTrump={false} trump={trump} playerPos={2} 
+      <InfoTable setsWon={props.playerData.setsWon[(playerNum+2)%4]} partner={partner === 2} breakTrump={false} trump={props.trump} playerPos={2} 
             name={roomPeople[(playerNum+2)%4][0]}/>
-      <InfoTable setsWon={props.playerData.setsWon[(playerNum+3)%4]} partner={partner === 3} breakTrump={false} trump={trump} playerPos={3} 
+      <InfoTable setsWon={props.playerData.setsWon[(playerNum+3)%4]} partner={partner === 3} breakTrump={false} trump={props.trump} playerPos={3} 
             name={roomPeople[(playerNum+3)%4][0]}/>
-      <SideBar sendMessage={sendMessage} sendBid={sendBid} startGame={startGame} startGameBool={roomPeople[3][2] !== "" && playerNum === 0}
-      allowBid={canBid} messages={props.sideMessages} roomCode={props.roomCode} messageRef={messageRef} bidRef={bidRef} 
-      biddingPhase={true} leaveRoom={props.leaveRoom} leaveBool={props.playerData.roomState === 0}/>
+      <SideBar sendMessage={sendMessage} sendBid={sendBid} startGame={props.startGame} 
+      startGameBool={roomPeople[3][2] !== "" && playerNum === 0 && props.playerData.roomState === 0}
+      allowBid={props.currBidder === props.id} messages={props.sideMessages} roomCode={props.roomCode} messageRef={messageRef} 
+      bidRef={bidRef} biddingPhase={true} leaveRoom={props.leaveRoom} leaveBool={props.playerData.roomState === 0}/>
     </div>
   )
 }

@@ -31,6 +31,7 @@ function MainComponent() {
   const [sideMessages, setSideMessages] = useState<[string,string][]> (
     []
   ) 
+
   const [playerData, setPlayerData] = useState<roomStatePublic> (
     {
       roomState: 0,
@@ -40,6 +41,13 @@ function MainComponent() {
       setsWon: Array(4).fill(0)
     }
   )
+
+  const setPlayerDataWith = (playerData:roomStatePublic) => {
+    setPlayerData((prev) => {
+      return playerData
+    })
+  }
+
   const [bgNum, setBgNum] = useState<number>(Math.floor(3*Math.random()))
 
   const [prevToken, setPrevToken] = useState<[string, string]>(["", ""])
@@ -59,8 +67,138 @@ function MainComponent() {
   const [gamePlayInfo, setGamePlayInfo] = useState<roundInfo>(
     getNewGame()
   )
-  
 
+  // Actual Game Stuff
+  const [cardList, setCardList] = useState<number[]>(
+    Array(13).fill(-1)
+  )
+  
+  const updateCardLst = (cardLstAppRoom:number[]) => {
+    console.log(cardLstAppRoom)
+    setCardList((prev) => {
+      return cardLstAppRoom
+    })
+  }
+  // card list and sel list
+
+  //cardlist not needed
+
+  /**
+   *  useEffect(() => {
+    props.updateCardLst(cardList)
+  }, [cardList])
+   */
+
+  const [selLst, setSelLst] = useState<boolean[]>(
+    Array(cardList.length).fill(false)
+  )
+
+  const updateSelected = (cardNum: number) => {
+    // If neg, we treat it as remove 1 
+    if (cardNum < 0){
+      setSelLst((prev) => {
+        for (var i in prev){
+          prev[i] = false
+        }
+        prev.splice(0,1)
+        return [...prev]
+      })
+    }
+
+    setSelLst((prev) => {
+      for (var i in prev){
+        prev[i] = false
+      }
+      prev[cardNum] = true
+      return [...prev]
+    })
+  }
+  
+  const [numCards, setNumCards] = useState<number>(cardList.length)
+
+  const [breakTrump, setBreakTrump] = useState<boolean> (false)
+
+  const trump = playerData.bid[0]
+  
+  const handleClickCard = (index:number) => {
+    updateSelected(index)
+  }
+
+  const checkValidCard = (cardToPlay:number, trump:number, breakTrump:boolean, firstCard:number, hand:number[]) => {
+    // We define the params as follows:
+    // cardToPlay: the card which we wish to check the legality of.
+    // trump: the trump suit 
+    // breakTrump: whether the trump has been broken yet or not. 
+    // firstCard: the firstCard played. If the current player is to play the next card, this value will be negative
+
+    const cardToPlaySuit = Math.floor(cardToPlay/13)
+
+    if (firstCard < 0){
+      //current player is to play the next card
+      if (breakTrump) return true
+      else {
+        return (cardToPlaySuit !== trump)
+      }
+    }
+    else{
+      const firstCardSuit = Math.floor(firstCard/13)
+      if (cardToPlaySuit === firstCardSuit) return true
+      else{
+        //the suit is different! Check for other cards in the hand which are legal. 
+        for (var i = 0; i < hand.length; ++i){
+          if (Math.floor(hand[i]/13) === firstCardSuit) return false
+        } 
+        return true
+      }
+    }
+  }
+
+  // This function removes the selected card, if any, and outputs the card num of the removed card. 
+  // TODO this function will have to be changed to communicate with the server
+  const handleClickSubmit = () => {
+    var selected = -1
+    for (var i = 0; i < selLst.length; ++i){
+      if (selLst[i]) selected = i
+    }
+
+    if (selected === -1){
+      // eslint-disable-next-line no-restricted-globals
+      confirm("Please Select a Card!")
+      return -1
+    }
+    else if (!checkValidCard(cardList[selected], trump, breakTrump, -1, cardList)){
+      // eslint-disable-next-line no-restricted-globals
+      confirm("This card is not legal to play!")
+      return -1
+    }
+    else {
+      const cardRemoved = cardList[selected]
+
+      setCardList((prev) => {
+        if (prev.length === numCards){
+          prev.splice(selected, 1)
+          setNumCards((prev) =>{ return prev-1})
+          updateSelected(-1)
+          return [...prev]
+        }
+        return prev        
+      })
+      
+      return cardRemoved
+    }
+  }
+
+  const [currBidder, setCurrBidder] = useState<number> (
+    -1
+  ) //change to false later
+  const setCurrBidderWith = (id: number) => {
+    setCurrBidder((prev) => {
+      return id
+    })
+  }
+
+
+  // SOCKET.IO STUFF
   const afterJoinRoom = (room:string) => () => {
     socket.emit('join-room', room, true, name, id)
     socket.emit("update-room-people", room)
@@ -151,26 +289,49 @@ function MainComponent() {
       }
       
     } )
+
+    socket.on("message-recieve", (message, token) => {
+      addMessage(message, token)
+    })
+  
+    socket.on("send-data", (roomState) => {
+      setPlayerData((prev) => {
+        //console.log(roomState)
+        return roomState
+      })
+    })
+  
+    socket.on("send-cards", (cards) => {
+      console.log(cards)
+      setCurrBidder(0)
+      setCardList((prev) => {
+        return cards
+      })
+    })
+
+    socket.on("get-bid", (player) => {
+      setCurrBidder(player)
+    })
   })
 
-  socket.on("message-recieve", (message, token) => {
-    addMessage(message, token)
-  })
-
-  socket.on("send-data", (roomState) => {
-    console.log("send-data")
-    setPlayerData((prev) => {
+  const startGame = () => {
+    const setData = (roomState:roomStatePublic, cards:number[]) => {
+      setCurrBidder(0)
       console.log(roomState)
-      return roomState
-    })
-  })
+      console.log(cards)
+      setCardList((prev) => {
+        return cards
+      })
 
-  socket.on("send-cards", (cards) => {
-    console.log(cards)
-    setCardList((prev) => {
-      return cards
-    })
-  })
+      setPlayerData((prev) => {
+        console.log(roomState)
+        console.log("updating Room State")
+        return roomState
+      })
+    }
+
+    socket.emit("start-game", roomCode, setData)
+  }
 
   useEffect(() => {
     setSideMessages((prev) => {
@@ -180,19 +341,22 @@ function MainComponent() {
       return [...prev]
     })
   }, [prevToken])
+ 
 
-
-  // Actual Game Stuff
-  const [cardList, setCardList] = useState<number[]>(
-    Array(13).fill(-1)
-  )
   
-  const updateCardLst = (cardLstAppRoom:number[]) => {
-    console.log(cardList)
-    setCardList((prev) => {
-      return cardLstAppRoom
-    })
-  }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   
@@ -203,9 +367,11 @@ function MainComponent() {
     return <JoinRoom setInfor={setInfor} setDisplayRuns={setDisplayRuns(true)}/>
   }
   else {
-    return <AppRoom roomCode={roomCode} name={name} id={id} sideMessages={sideMessages} 
-    addMessage={addMessage} leaveRoom={exitRoom} playerData={playerData} cardLst={cardList
-    } updateCardLst={updateCardLst} bgNum={bgNum} />
+    return <AppRoom roomCode={roomCode} name={name} id={id} sideMessages={sideMessages}
+    addMessage={addMessage} leaveRoom={exitRoom} playerData={playerData} cardLst={cardList} 
+    updateCardLst={updateCardLst} bgNum={bgNum} startGame={startGame} cardList={cardList} selLst={selLst} 
+    handleClickCard={handleClickCard} handleClickSubmit={handleClickSubmit} trump={trump} currBidder={currBidder}
+    setPlayerDataWith={setPlayerDataWith} setCurrBidderWith={setCurrBidderWith}/>
   }
 }
 
