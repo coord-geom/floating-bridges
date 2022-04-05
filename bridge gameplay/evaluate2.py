@@ -11,7 +11,7 @@ tot = {}
 games = []
 
 for i in range(2):
-    checkpoint = torch.load('model/LastChance_Agent'+str(i)+'.pth')
+    checkpoint = torch.load('model/ExtendedLastChance_Agent'+str(i)+'.pth')
     agents[i].load_state(checkpoint)
 
 for i in range(1,8):
@@ -31,7 +31,7 @@ bidder_win_cnt = 0
 
 printing = False
 
-while game_cnt<100000: # game_cnt < NUMGAMES
+while game_cnt<10000: # game_cnt < NUMGAMES
 
     next_player = game_cnt % 4
     old_player = next_player
