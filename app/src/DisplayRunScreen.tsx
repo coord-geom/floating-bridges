@@ -20,7 +20,7 @@ export interface roundInfo {
     win: number
     desc: string   // EG: "Round: 1\nPlayer 2 starts\nPlayer 1 wins."
   }[]
-  winners:[number, number]
+  winners: number[]
 }
 
 const suits = ["clubs", "diamonds", "hearts", "spades"]
