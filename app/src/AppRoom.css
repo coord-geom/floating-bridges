@@ -102,7 +102,7 @@
   width: 100%;
   height: 5vh;
   font: 25px "Century Gothic", Futura, sans-serif;
-  background-color: rgb(169, 161, 255);
+  background-color: rgb(169, 161, 255, 0.5);
 }
 
 .sidebar-message-log{
@@ -121,7 +121,7 @@
   width: 96.5%;
   padding: 1%;
   font: 18px "Century Gothic", Futura, sans-serif;
-  background-color: rgb(155, 187, 255);
+  background-color: rgb(155, 187, 255, 0.5);
   border-left:2px solid rgb(0, 0, 0, 0.5);
   border-right:2px solid rgb(0, 0, 0, 0.5);
   border-top:1px solid rgb(0, 0, 0, 0.5);
@@ -136,7 +136,7 @@
   width: 96.5%;
   padding: 1%;
   font: 18px "Century Gothic", Futura, sans-serif;
-  background-color: rgb(101, 150, 255);
+  background-color: rgb(101, 150, 255, 0.5);
   border-left:2px solid rgb(0, 0, 0, 0.5);
   border-right:2px solid rgb(0, 0, 0, 0.5);
   border-top:1px solid rgb(0, 0, 0, 0.5);
@@ -168,7 +168,7 @@
   margin-left: 82vw;
   align-items: center;
   position: absolute;
-  background-color: rgb(197, 215, 255);
+  background-color: rgb(197, 215, 255, 0.5);
   padding-bottom: 1vh;
 }
 
@@ -274,7 +274,7 @@
   padding-left: 2vw;
   padding-right: 2vw;
   position: absolute;
-  background-color: rgba(37, 238, 90, 0.5);
+  background-color: rgba(37, 238, 90, 0.6);
   /*border: 3px solid #73AD21;*/
 }
 
@@ -288,7 +288,7 @@
   padding-left: 2vw;
   padding-right: 2vw;
   position: absolute;
-  background-color: rgba(37, 238, 90, 0.5);
+  background-color: rgba(37, 238, 90, 0.6);
   /*border: 3px solid #73AD21;*/
 }
 
@@ -302,7 +302,7 @@
   padding-left: 2vw;
   padding-right: 2vw;
   position: absolute;
-  background-color: rgba(37, 238, 90, 0.5);
+  background-color: rgba(37, 238, 90, 0.6);
   /*border: 3px solid #73AD21;*/
 }
 
@@ -316,7 +316,7 @@
   padding-left: 2vw;
   padding-right: 2vw;
   position: absolute;
-  background-color: rgba(37, 238, 90, 0.5);
+  background-color: rgba(37, 238, 90, 0.6);
   /*border: 3px solid #73AD21;*/
 }
 
@@ -334,3 +334,20 @@
     overflow: visible;
 }
 
+.background-image-dim {
+  position: fixed; /*image will always be top: 0 left: 0 by default.*/
+  display: block; /*make it a block for width to work.*/
+  width: 100%; /*set default width*/
+  height: 100%; /*set default height*/
+  max-width: 1920px; /*set max width*/
+  max-height: 1080px; /*set max height*/
+  z-index: -999999; /*set z-index so it won't overlap any other element.*/
+  filter: brightness(50%)
+}
+
+.black-BG {
+  background-color: black;
+  position: absolute;
+  width: 100%; /*set default width*/
+  height: 100%; /*set default height*/
+}

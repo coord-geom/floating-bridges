@@ -1,7 +1,7 @@
 import React, { FC, useState } from "react"
 import ReactDOM from 'react-dom';
 import './index.css';
-import AppRoom from './AppRoom';
+import AppRoom, { roomStatePublic } from './AppRoom';
 import JoinRoom from './JoinRoomScreen';
 import DisplayRuns, { roundInfo } from './DisplayRunScreen';
 import reportWebVitals from './reportWebVitals';
@@ -31,11 +31,29 @@ function MainComponent() {
   const [sideMessages, setSideMessages] = useState<[string,string][]> (
     []
   ) 
+  const [playerData, setPlayerData] = useState<roomStatePublic> (
+    {
+      roomState: 0,
+      bid: [-1,-1],
+      partners: [-1,-1],
+      cardsPlayed: Array(4).fill(-1),
+      setsWon: Array(4).fill(0)
+    }
+  )
+  const [bgNum, setBgNum] = useState<number>(Math.floor(3*Math.random()))
+
   const [prevToken, setPrevToken] = useState<[string, string]>(["", ""])
   
   const getNewGame = () => {
-    const allGames = dataJson.games
-    return allGames[Math.floor( (allGames.length)*Math.random() )]
+    try {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const allGames = dataJson.games
+      return allGames[Math.floor( (allGames.length)*Math.random() )]
+    }
+    catch (e) {
+      return 
+    }
   }
 
   const [gamePlayInfo, setGamePlayInfo] = useState<roundInfo>(
@@ -46,6 +64,9 @@ function MainComponent() {
   const afterJoinRoom = (room:string) => () => {
     socket.emit('join-room', room, true, name, id)
     socket.emit("update-room-people", room)
+    setBgNum((prev) => {
+      return Math.floor(3*Math.random())
+    })
   }
 
   const exitRoom = () => {  
@@ -136,6 +157,21 @@ function MainComponent() {
     addMessage(message, token)
   })
 
+  socket.on("send-data", (roomState) => {
+    console.log("send-data")
+    setPlayerData((prev) => {
+      console.log(roomState)
+      return roomState
+    })
+  })
+
+  socket.on("send-cards", (cards) => {
+    console.log(cards)
+    setCardList((prev) => {
+      return cards
+    })
+  })
+
   useEffect(() => {
     setSideMessages((prev) => {
       const message = prevToken[0]
@@ -145,6 +181,21 @@ function MainComponent() {
     })
   }, [prevToken])
 
+
+  // Actual Game Stuff
+  const [cardList, setCardList] = useState<number[]>(
+    Array(13).fill(-1)
+  )
+  
+  const updateCardLst = (cardLstAppRoom:number[]) => {
+    console.log(cardList)
+    setCardList((prev) => {
+      return cardLstAppRoom
+    })
+  }
+
+
+  
   if (inDisplayRuns){
     return <DisplayRuns infor={gamePlayInfo} onCLickNew={newGame} onClickReturn={setDisplayRuns(false)} />
   }
@@ -153,7 +204,8 @@ function MainComponent() {
   }
   else {
     return <AppRoom roomCode={roomCode} name={name} id={id} sideMessages={sideMessages} 
-    addMessage={addMessage} leaveRoom={exitRoom}/>
+    addMessage={addMessage} leaveRoom={exitRoom} playerData={playerData} cardLst={cardList
+    } updateCardLst={updateCardLst} bgNum={bgNum} />
   }
 }
 

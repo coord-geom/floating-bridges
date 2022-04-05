@@ -320,6 +320,7 @@ const DisplayRuns:FC<DisplayRunsProps> = (props) => {
 
   return (
     <div className='all-div-display'>
+      <img className='background-image' src={require("./sprites/displaySimsBG.png")} alt="backgroundImage" />
       <div className='text-title-display'>
         <p className='display-title'>Simulate AI!</p>
         <button onClick={props.onCLickNew} className="display-button"> Run New Game! </button>

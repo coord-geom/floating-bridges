@@ -199,7 +199,16 @@
 }
 
 .all-div-display{
-  background-image: url("./sprites/joinRoomBG.png");
   overflow: hidden;
   /*background-image: url("./sprites/joinRoomBG.png");*/
+}
+
+.background-image {
+  position: fixed; /*image will always be top: 0 left: 0 by default.*/
+  display: block; /*make it a block for width to work.*/
+  width: 100%; /*set default width*/
+  height: 100%; /*set default height*/
+  max-width: 1920px; /*set max width*/
+  max-height: 1080px; /*set max height*/
+  z-index: -999999; /*set z-index so it won't overlap any other element.*/
 }

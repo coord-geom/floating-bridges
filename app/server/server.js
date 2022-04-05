@@ -9,7 +9,7 @@ const roomPeople = new Map();
  *  This is a Map of json objects directing from a room id to objects of the following form
  *  {
       people: [],                   // 4 elements of the following form: [name, roomID, socketID]
-      roomState: 0,                 // 0 for not started; 1 for bidding; 2 for playing
+      roomState: 0,                 // 0 for not started; 1 for bidding; 2 for partner; 3 for playing
       hand: [],                     // the hand given to players. Inits when roomState gets set to 1.
       bids: [],                     // collection of all bids 
       bid: [0, 0],                  // suit, bid
@@ -138,4 +138,105 @@ io.on('connection', socket => {
       socket.to(room).emit("message-recieve", message, token)
     }
   })
+
+  socket.on("start-game", (room) => {
+    const shuffle = (array) => {
+      let currentIndex = array.length,  randomIndex;
+  
+      // While there remain elements to shuffle...
+      while (currentIndex !== 0) {
+  
+        // Pick a remaining element...
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+  
+        // And swap it with the current element.
+        [array[currentIndex], array[randomIndex]] = [
+          array[randomIndex], array[currentIndex]];
+      }
+  
+      return array;
+    }
+  
+    const genCards = () => {
+      const getPoints = (cards) => {
+        var numPoints = 0
+        var suitCounts = [0,0,0,0]
+        for (var i = 0; i < cards.length; ++i){
+          suitCounts[Math.floor(cards[i]/13)] += 1
+          //J to A points
+          numPoints += Math.max((cards[i])%13-8, 0)
+        }
+  
+        // Suit Points
+        for (var i = 0; i < suitCounts.length; ++i){
+          numPoints += Math.max((suitCounts[i])-4, 0)
+        }
+        return numPoints
+      }
+  
+      console.log("generating cards!")
+      var allCards = Array.from(Array(52).keys())
+      var cardList1 = allCards.slice(0,13)
+      var cardList2 = allCards.slice(13,26)
+      var cardList3 = allCards.slice(26,39)
+      var cardList4 = allCards.slice(39,52)
+      var noReshuffle = false
+      while (!noReshuffle){
+        noReshuffle = true
+        allCards = shuffle(allCards)
+  
+        cardList1 = allCards.slice(0,13)
+        cardList2 = allCards.slice(13,26)
+        cardList3 = allCards.slice(26,39)
+        cardList4 = allCards.slice(39,52)
+  
+        cardList1 = cardList1.sort((a, b) => a - b)
+        cardList2 = cardList2.sort((a, b) => a - b)
+        cardList3 = cardList3.sort((a, b) => a - b)
+        cardList4 = cardList4.sort((a, b) => a - b)
+  
+        if (getPoints(cardList1) < 5) noReshuffle = false
+        if (getPoints(cardList2) < 5) noReshuffle = false
+        if (getPoints(cardList3) < 5) noReshuffle = false
+        if (getPoints(cardList4) < 5) noReshuffle = false
+      } 
+  
+      return [cardList1, cardList2, cardList3, cardList4]
+    }
+
+    roomPeople.get(room).roomState   = 1
+    const allCards = genCards()
+
+
+    const roomStateExport = {
+      roomState: roomPeople.get(room).roomState,
+      bids: roomPeople.get(room).bids,
+      partners: roomPeople.get(room).partners,
+      cardsPlayed: roomPeople.get(room).cardsPlayed,
+      setsWon: roomPeople.get(room).setsWon
+    }
+
+    
+    
+    console.log(roomStateExport)
+    socket.in(room).emit("send-data", roomStateExport)
+
+    for (var i = 0; i < 4; ++i){
+      console.log(roomPeople.get(room).people[i][2])
+      console.log(allCards[i])
+      console.log(roomPeople)
+      socket.to(roomPeople.get(room).people[i][2]).emit("send-cards", allCards[i])
+    }
+  })
+
+  /**
+   * export interface roomStatePublic {
+   * roomState: number 
+   * bid: [number,number]
+   * partners: [number, number]
+   * cardsPlayed: number[]
+   * setsWon: number[]
+   * }
+   */
 })
