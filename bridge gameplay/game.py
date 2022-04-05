@@ -370,8 +370,10 @@ class Bridge:
             cards_to_int = []
             for i in Bridge.past_cards:
                 cards_to_int.append(13 * (i[0] - 1) + i[1] - 1)
-            desc = "Round: " + str(int(len(Bridge.cards_played) / 4)) + "\nPlayer " + str((self.player_num+1)%4 + 1) + " starts\nPlayer " + str(Bridge.next_starter + 1) + " wins."
-            play = {'cards': cards_to_int, 'start': (self.player_num+1)%4, 'win': Bridge.next_starter, 'desc': desc}
+            prev_starter = (self.player_num+1)%4
+            cards_to_int[prev_starter], cards_to_int[(prev_starter+1)%4], cards_to_int[(prev_starter+2)%4], cards_to_int[(prev_starter+3)%4] = cards_to_int[0], cards_to_int[1], cards_to_int[2], cards_to_int[3]
+            desc = "Round: " + str(int(len(Bridge.cards_played) / 4)) + "\nPlayer " + str(prev_starter + 1) + " starts\nPlayer " + str(Bridge.next_starter + 1) + " wins."
+            play = {'cards': cards_to_int, 'start': prev_starter, 'win': Bridge.next_starter, 'desc': desc}
             Bridge.plays_lst.append(play)
             Bridge.past_cards = []
 
@@ -395,7 +397,7 @@ class Bridge:
 
     def write_to_json(self):
         partner_card_to_int = 13 * (Bridge.partner_card[0] - 1) + Bridge.partner_card[1] - 1
-        partner_num = -1
+        partner_num = 4
         for i in range(0,4):
             if Bridge.bidder_lst[i] == 1 & i != Bridge.bidder_num:
                 partner_num = i
