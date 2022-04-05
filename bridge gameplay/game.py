@@ -366,13 +366,12 @@ class Bridge:
 
         # If you are the last player
         elif (self.player_num+1)%4 == Bridge.next_starter: 
-            prev_starter = copy.deepcopy(Bridge.next_starter)
             Bridge.next_starter = self.largest_card(Bridge.past_cards)
             cards_to_int = []
             for i in Bridge.past_cards:
                 cards_to_int.append(13 * (i[0] - 1) + i[1] - 1)
-            desc = "Round: " + str(int(len(Bridge.cards_played) / 4)) + "\nPlayer " + str(prev_starter + 1) + " starts\nPlayer " + str(Bridge.next_starter + 1) + " wins."
-            play = {'cards': cards_to_int, 'start': prev_starter, 'win': Bridge.next_starter, 'desc': desc}
+            desc = "Round: " + str(int(len(Bridge.cards_played) / 4)) + "\nPlayer " + str((self.player_num+1)%4 + 1) + " starts\nPlayer " + str(Bridge.next_starter + 1) + " wins."
+            play = {'cards': cards_to_int, 'start': (self.player_num+1)%4, 'win': Bridge.next_starter, 'desc': desc}
             Bridge.plays_lst.append(play)
             Bridge.past_cards = []
 
@@ -410,5 +409,6 @@ class Bridge:
                 if Bridge.bidder_lst[i] == 0:
                     winners.append(i)
         data = {'bids': Bridge.bids_lst, 'partner': {'card': partner_card_to_int, 'id': partner_num}, 'plays': Bridge.plays_lst, 'winners': winners}
-        with open('game_data.json', 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+        # with open('game_data.json', 'w', encoding='utf-8') as f:
+        #     json.dump(data, f, ensure_ascii=False, indent=4)
+        return data

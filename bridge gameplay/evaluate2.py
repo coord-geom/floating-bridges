@@ -1,12 +1,14 @@
 import torch
 from agents2 import BiddingAgent,  PlayingAgent
 from game import Bridge
+import json
 
 agents      = [BiddingAgent(), PlayingAgent()]
 bridges     = [Bridge(i) for i in range(4)]
 
 bids = {}
 tot = {}
+games = []
 
 for i in range(2):
     checkpoint = torch.load('model/LastChance_Agent'+str(i)+'.pth')
@@ -171,7 +173,9 @@ while game_cnt<10000: # game_cnt < NUMGAMES
         if printing: print(Bridge.bidder_sets,'Bidder lose')
         #print('Lose Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
         pass
-    bridge.write_to_json()
+    game_data = bridge.write_to_json()
+    games.append(game_data)
+
     if game_cnt%1000 == 0:
         print(game_cnt/100,'% done')
 
@@ -195,3 +199,7 @@ for i in range(1,8):
             prop[(i,j)] = 'NIL'
 
 print(prop)
+
+games_dict = {'games': games}
+with open('game_data.json', 'w', encoding='utf-8') as f:
+    json.dump(games_dict, f, ensure_ascii=False, indent=4)
