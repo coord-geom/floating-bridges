@@ -85,7 +85,7 @@ class BiddingAgent(Agent):
         if game.last_number > 0:
             id = game.last_suit + (game.last_number-1) * 5
 
-        bids = [[0,0] for _ in range(4)]
+        bids = [[0,0] for _ in range(8)]
         for i in range(4):
             if id+i+1 >= len(BiddingAgent.OUTPUT_MAP): 
                 break

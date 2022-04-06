@@ -1,3 +1,4 @@
+from encodings import utf_8
 import torch
 from agents2 import *
 from game import Bridge
@@ -16,7 +17,7 @@ games = []
 for i in range(2):
     checkpoint = torch.load('model/ExtendedLastChance_Agent'+str(i)+'.pth')
     agents[i].load_state(checkpoint)
-    agents[i].epsilon = Agent().eps_min
+    agents[i].epsilon = 0.01
 
 for i in range(1,8):
     for j in range(1,6):
@@ -37,11 +38,20 @@ total_against_sets = 0
 illegal_cnt = 0
 printing = False
 
-while game_cnt<100: # game_cnt < NUMGAMES
+
+
+game_10k_sim = []
+
+while game_cnt<10000: # game_cnt < NUMGAMES
 
     next_player = game_cnt % 4
     old_player = next_player
     repeat_cnt = 0
+
+    bidlist = []
+    partner = {}
+    plays = []
+    play_filter = []
 
     # If any of the players can reshuffle, start a new game
     if check_reshuffle():
@@ -63,15 +73,22 @@ while game_cnt<100: # game_cnt < NUMGAMES
 
         state = agents[0].get_state(bridge)
 
-        move = agents[0].get_action(state, bridge)
+        #move = agents[0].get_action(state, bridge)
+        #if repeat_cnt == 2: 
+        #    move = agents[0].explore(bridge)
+        #    repeat_cnt = 0
+        move = agents[0].explore(bridge)
+
+        if move == [0,0]: bidlist.append(-1)
+        else: bidlist.append(5*move[0]+move[1])
 
         if printing: print(next_player,move)
         
         reward, done, next_player = bridge.play_step(move)
 
-        if old_player == next_player:
-           repeat_cnt += 1
-           illegal_cnt += 1
+        #if old_player == next_player:
+        #   repeat_cnt += 1
+        #   illegal_cnt += 1
 
     # If everyone passes, start a new game
     if Bridge.all_passed:
@@ -132,7 +149,13 @@ while game_cnt<100: # game_cnt < NUMGAMES
     bridges[(Bridge.bidder_num + 2)%4].play_step()
     bridges[(Bridge.bidder_num + 3)%4].play_step()
 
-
+    pc = Bridge.partner_card
+    partner['card'] = (pc[0]-1)*13 + pc[1]-1
+    for i in range(4):
+        if Bridge.bidder_lst[i] == 1 and bridges[i].player_num != Bridge.bidder_num:
+            partner['id'] = i
+            break
+    
 
     # Execute the card playing phase
     repeat_cnt = 0
@@ -149,7 +172,11 @@ while game_cnt<100: # game_cnt < NUMGAMES
 
         state   = agents[1].get_state(bridge)
         
-        move = agents[1].get_action(state, bridge)
+        #move = agents[1].get_action(state, bridge)
+        #if repeat_cnt == 2: 
+        #    move = agents[1].explore(bridge)
+        #    repeat_cnt = 0
+        move = agents[1].explore(bridge)
 
         if printing: 
             if Bridge.bidder_num == next_player:
@@ -159,7 +186,9 @@ while game_cnt<100: # game_cnt < NUMGAMES
             else:
                 print('Against',num[move[1]-1],suit[move[0]-1])
 
+        plays.append([next_player,(move[0]-1)*13+move[1]-1])
         reward, done, next_player = bridge.play_step(move)
+
 
         if old_player == next_player:
             repeat_cnt += 1
@@ -171,17 +200,52 @@ while game_cnt<100: # game_cnt < NUMGAMES
     tot[(Bridge.bid_number,Bridge.bid_suit)] += 1
     #print('Game',game_cnt)
     #print('Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
+
+
+    for j in range(13):
+        c_order = [None,None,None,None]
+        info = {}
+        
+        for i in range(4):
+            c_order[plays[j*4+i][0]] = plays[j*4+i][1]
+        
+        info['cards'] = c_order
+
+        info['start'] = plays[j*4][0]
+        if j < 12:
+            info['win'] = plays[(j+1)*4][0]
+        else:
+            info['win'] = Bridge.next_starter
+
+        info['desc'] = 'Round ' + str(j+1) + '\nPlayer' + str(info['start']+1) +\
+                        ' starts\nPlayer ' + str(info['win']+1) + ' wins' 
+
+        play_filter.append(info)
+
+    winners = []
+
     if Bridge.bidder_sets >= 6 + Bridge.bid_number:
-        print('Win Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
+        #print('Win Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
         if printing: print(Bridge.bidder_sets,'Bidder win')
         bidder_win_cnt += 1
         bids[(Bridge.bid_number,Bridge.bid_suit)] += 1
+        for i in range(4):
+            if Bridge.bidder_lst[i] == 1: winners.append(i)
     else:
         if printing: print(Bridge.bidder_sets,'Bidder lose')
-        print('Lose Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
-        pass
+        #print('Lose Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
+        for i in range(4):
+            if Bridge.bidder_lst[i] == 0: winners.append(i)
+
+
+    roundInfo = {'bids':bidlist,'partner':partner,'plays':play_filter,'winners':winners}
+    #print(roundInfo)  
     #game_data = bridge.write_to_json()
     #games.append(game_data)
+
+    game_10k_sim.append(roundInfo)
+        
+    
 
     if game_cnt%1000 == 0:
         print(game_cnt/100,'% done')
@@ -193,16 +257,13 @@ while game_cnt<100: # game_cnt < NUMGAMES
     call_state = []
     play_states = [None,None,None,None]
 
-print('bidder win rate:',bidder_win_cnt/game_cnt)
-print(bids)
-print(tot)
+#print('bidder win rate:',bidder_win_cnt/game_cnt)
+#print(bids)
+#print(tot)
 
-
-prop = {}
-bids_list_keys = []
-bids_list = []
-bids_list_with_suits = []
-
+g_d = {'games':game_10k_sim}
+with open('model/game10k.json','w',encoding='utf-8') as f:
+    json.dump(g_d,f,ensure_ascii=False,indent=4)
 
 '''
 for i in range(1,8):
