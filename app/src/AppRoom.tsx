@@ -158,7 +158,7 @@ interface InfoTableProps {
 }
 
 export const InfoTable:FC<InfoTableProps> = (props) => {
-  const suits = ["Clubs", "Diamonds", "Hearts", "Spades"]
+  const suits = ["Clubs", "Diamonds", "Hearts", "Spades", "No Trump"]
   return (
     <div className={"info-table-" + props.playerPos}>
       <p className='info-text'>{"Name: " + props.name}</p>
@@ -321,6 +321,7 @@ const AppRoom:FC<AppRoomProps> = (props) => {
 
   /** The other players info. Again, this will need to be updated when you start building the server. **/
   const getPartner = (revealed: boolean) => {
+    if (!revealed) return -1
     if (playerNum === props.playerData.partners[0] || playerNum === props.playerData.partners[1]){
       for (var i = 0; i < 4; ++i){
         if ((i === props.playerData.partners[0] || i === props.playerData.partners[1]) && i !== playerNum){
@@ -336,7 +337,6 @@ const AppRoom:FC<AppRoomProps> = (props) => {
         }
       }
     }
-    return -1
   }
   
   const partner = getPartner(props.partnerRevealed)
@@ -370,11 +370,11 @@ const AppRoom:FC<AppRoomProps> = (props) => {
         confirm("Please Select a Bid!")
         return;
       }
-      const bid = parseInt(bidValString)
-      const currBid = props.playerData.bid[0]*5 + props.playerData.bid[1] - 1
+      const bid = parseInt(bidValString) - 1
+      const currBid = props.playerData.bid[0]*5 + props.playerData.bid[1]
       console.log(bid)
       console.log(currBid)
-      if ((bid === -1 || bid <= currBid) && bid !== 0){
+      if ((bid === -2 || bid <= currBid) && bid !== -1){
         // eslint-disable-next-line no-restricted-globals
         confirm("Please Select a Valid Bid!")
         return;
@@ -465,7 +465,7 @@ const AppRoom:FC<AppRoomProps> = (props) => {
       <OthHandSide side={1} numCards={props.playerData.cardsRemaining[(playerNum+1)%4]}  partner={partner === 1}/>
       <OthHandSide side={3} numCards={props.playerData.cardsRemaining[(playerNum+3)%4]}  partner={partner === 3}/>
       <MiddleHand 
-        cardLst={midCardList}
+        cardLst={props.playerData.cardsPlayed}
         selLst={[false,false,false,false]}
         playerNum={playerNum}
         handleClickCard={() => {}}
@@ -482,8 +482,9 @@ const AppRoom:FC<AppRoomProps> = (props) => {
             name={roomPeople[(playerNum+3)%4][0]}/>
       <SideBar sendMessage={sendMessage} sendBid={sendBid} startGame={props.startGame} 
       startGameBool={roomPeople[3][2] !== "" && playerNum === 0 && props.playerData.roomState === 0}
-      allowBid={props.currBidderPlayer === props.id} messages={props.sideMessages} roomCode={props.roomCode} messageRef={messageRef} 
-      bidRef={bidRef} biddingPhase={props.playerData.roomState!==2} leaveRoom={props.leaveRoom} leaveBool={props.playerData.roomState === 0}/>
+      allowBid={props.currBidderPlayer === props.id && (props.playerData.roomState === 1 || props.playerData.roomState === 2)} messages={props.sideMessages} 
+      roomCode={props.roomCode} messageRef={messageRef} bidRef={bidRef} biddingPhase={props.playerData.roomState!==2} 
+      leaveRoom={props.leaveRoom} leaveBool={props.playerData.roomState === 0}/>
     </div>
   )
 }

@@ -37,8 +37,8 @@ const makeid = (length) => {
 
 const getStringBid = (id)=>{
   const bidSuits = ["Club", "Diamond", "Heart", "Spade", "No Trump"]
-  if (id === 0) return "Pass"
-  return Math.ceil(id/5) + " " + bidSuits[(id-1) % 5] 
+  if (id === -1) return "Pass"
+  return Math.ceil((id+1)/5) + " " + bidSuits[(id) % 5] 
 }
 
 const suits = ["Clubs", "Diamonds", "Hearts", "Spades"]
@@ -54,7 +54,7 @@ const getStringCard = (id)=>{
     return card%13
   }
   return "The " + numbers[getNumber(id)] + " of " + suits[getSuit(id)]
-}
+} 
 
 io.on('connection', socket => {
   console.log("User " + socket.id + " has connected")
@@ -273,6 +273,7 @@ io.on('connection', socket => {
   })
 
   socket.on("send-bid", (bid, player, room, addMessage) => {
+    console.log("start of send-bid")
     console.log(bid)
     console.log(player)
     const message = "Player " + (player + 1) + " (" + roomPeople.get(room).people[player][0] +  ") bid " + getStringBid(bid)
@@ -290,7 +291,7 @@ io.on('connection', socket => {
     if (oldBids.length >= 4){
       isFinished = true
       for (var i = 0; i < 3; ++i){
-        if (oldBids[oldBids.length-1-i] !== 0){
+        if (oldBids[oldBids.length-1-i] !== -1){
           isFinished = false
           break
         }
@@ -299,8 +300,8 @@ io.on('connection', socket => {
 
     console.log(isFinished)
 
-    if (bid !== 0){
-      roomPeople.get(room).bid = [Math.floor((bid+1)/5),(bid+1)%5]
+    if (bid !== -1){
+      roomPeople.get(room).bid = [Math.floor((bid)/5),(bid)%5]
     }
 
     if (isFinished){
@@ -370,7 +371,7 @@ io.on('connection', socket => {
     socket.in(room).emit("send-data", roomStateExport)
   })
 
-  socket.on('playCard', (cardRemoved, id, room, addMessageAndUpdate) => {
+  socket.on('play-card', (cardRemoved, id, room, addMessageAndUpdate) => {
     //Update CardsPlayed
     const cardsPlayed = roomPeople.get(room).cardsPlayed
     cardsPlayed[id] = cardRemoved
@@ -381,30 +382,30 @@ io.on('connection', socket => {
 
     for (var i = 0; i < 4; ++i){
       if (cardsPlayed[i] === -1){
-        cardsPlayedFull = false
+        cardsPlayedFull = false 
         break;
       }
     }
 
     var partnerRevealed = false
-    var player = 0
+    var player = (id + 1)%4
+    var hasTrump = false
     if (cardsPlayedFull){
       var maxPlay = 0
       
       const trump = roomPeople.get(room).bid[1]
       const startID = (id + 1)%4
-      var hasTrump = false
       
       const partnerCard = roomPeople.get(room).partnerCard
 
       //check winner + partner Revealed
       for (var i = 0; i < 4; ++i){
-        if (Math.floor(cardsPlayed[i]) === trump) hasTrump = true
+        if (Math.floor(cardsPlayed[i]/13) === trump) hasTrump = true
         if (partnerCard === cardsPlayed[i]) partnerRevealed = true
       }
       if (hasTrump){
         for (var i = 0; i < 4; ++i){
-          if (Math.floor(cardsPlayed[i]) === trump){
+          if (Math.floor(cardsPlayed[i]/13) === trump){
             if (cardsPlayed[i] > maxPlay){
               player = i
               maxPlay = cardsPlayed[i]
@@ -414,7 +415,7 @@ io.on('connection', socket => {
       }
       else {
         for (var i = 0; i < 4; ++i){
-          if (Math.floor(cardsPlayed[i]) === Math.floor(cardsPlayed[startID])){
+          if (Math.floor(cardsPlayed[i]/13) === Math.floor(cardsPlayed[startID]/13)){
             if (cardsPlayed[i] > maxPlay){
               player = i
               maxPlay = cardsPlayed[i]
@@ -422,9 +423,6 @@ io.on('connection', socket => {
           }
         }
       }
-
-
-      
       // Update Info 
       roomPeople.get(room).setsWon[player] += 1
       roomPeople.get(room).roundStarter = player
@@ -440,13 +438,69 @@ io.on('connection', socket => {
       cardsRemaining: roomPeople.get(room).cardsRemaining
     } 
 
-    //output roundStarter and partnerRevealed (player)
-    addMessageAndUpdate(message, token, roomStateExport)
+    var gameFinished = true
+    for (var i = 0; i < 4; ++i){
+      if (roomPeople.get(room).cardsRemaining[i] !== 0) gameFinished = false
+    }
 
-    const setStartDelta = (roomStateExport.bid[1] === 4) ? 0 : 1
-    socket.to(room).emit("message-recieve", message, token)
-    socket.to(room).emit("get-player", (player+setStartDelta)%4)
-    socket.in(room).emit("send-data", roomStateExport)
+    if (gameFinished) {
+      // Find winners
+      const bidderSide = roomPeople.get(room).partners
+      const nonbidders = [-1, -1]
+      const setsWon = [0,0]
+      const token = makeid(16)
+
+      for (var i = 0; i < 4; ++i){
+        setsWon[(bidderSide.includes(i))? 0 : 1] += roomPeople.get(room).setsWon[i]
+        if (!bidderSide.includes(i)){
+          if (nonbidders[0] === -1) nonbidders[0] = i
+          else nonbidders[1] = i 
+        }
+      }
+
+      const won = (setsWon[0] >= (7 + roomPeople.get(room).bid[0]))
+      var message = "Bidders " + roomPeople.get(room).people[bidderSide[0]][0] + " and " + roomPeople.get(room).people[bidderSide[1]][0] + 
+                    (won ? " won against " : "lost to ") + "Nonbidders " + 
+                    roomPeople.get(room).people[nonbidders[0]][0] + " and " + roomPeople.get(room).people[nonbidders[1]][0] + " " + 
+                    setsWon[0] + " to " + setsWon[1]
+      
+      //reset variables
+      roomPeople.get(room).roomState = 0
+      roomPeople.get(room).hand = []
+      roomPeople.get(room).bid = [-1,-1]
+      roomPeople.get(room).bids = []
+      roomPeople.get(room).partners = [-1, -1]
+      roomPeople.get(room).partnerCard = -1
+      roomPeople.get(room).cardsPlayed = [-1,-1,-1,-1]
+      roomPeople.get(room).cardsRemaining = [13,13,13,13]
+      roomPeople.get(room).roundStarter = -1
+      roomPeople.get(room).setsWon = [0, 0, 0, 0] 
+      roomPeople.get(room).trumpBroken = false
+      
+      const roomStateExport = {
+        roomState: roomPeople.get(room).roomState,
+        bid: roomPeople.get(room).bid,
+        partners: roomPeople.get(room).partners,
+        cardsPlayed: roomPeople.get(room).cardsPlayed,
+        setsWon: roomPeople.get(room).setsWon,
+        cardsRemaining: roomPeople.get(room).cardsRemaining
+      }
+      
+      addMessageAndUpdate(player, roomStateExport, hasTrump, partnerRevealed, message, token)
+
+      socket.in(room).emit("send-data", roomStateExport)
+      socket.to(room).emit("message-recieve", message, token)      
+      socket.in(room).emit("send-card", player, hasTrump, partnerRevealed)
+    }
+    else {
+      //output roundStarter and partnerRevealed (player)
+      addMessageAndUpdate(player, roomStateExport, hasTrump, partnerRevealed)
+
+      socket.in(room).emit("send-data", roomStateExport)
+      socket.in(room).emit("send-card", player, hasTrump, partnerRevealed)
+    }
+
+    
   })
   /**
    * export interface roomStatePublic {

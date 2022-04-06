@@ -55,6 +55,7 @@ function MainComponent() {
         cardsRemaining: Array(4).fill(13)
       }
     })
+    setInfor("", "", -1)
   }
 
   const setPlayerDataWith = (playerData:roomStatePublic) => {
@@ -146,13 +147,20 @@ function MainComponent() {
     // breakTrump: whether the trump has been broken yet or not. 
     // firstCard: the firstCard played. If the current player is to play the next card, this value will be negative
 
+    console.log(hand)
+
     const cardToPlaySuit = Math.floor(cardToPlay/13)
 
     if (firstCard < 0){
       //current player is to play the next card
       if (breakTrump) return true
       else {
-        return (cardToPlaySuit !== trump)
+        //check if hand is all trumps
+        for (var i = 0; i < hand.length; ++i){
+          if (Math.floor(hand[i]/13) !== trump) return (cardToPlaySuit !== trump)
+        }
+
+        return true
       }
     }
     else{
@@ -172,8 +180,10 @@ function MainComponent() {
   // TODO this function will have to be changed to communicate with the server
   const handleClickSubmit = () => {
     var selected = -1
+    var firstCard = -1
     for (var i = 0; i < selLst.length; ++i){
       if (selLst[i]) selected = i
+      if (playerData.cardsPlayed[(id + i) % 4] !== -1 && firstCard === -1) firstCard = playerData.cardsPlayed[(id + i) % 4]
     }
 
     if (selected === -1){
@@ -181,7 +191,7 @@ function MainComponent() {
       confirm("Please Select a Card!")
       return -1
     }
-    else if (!checkValidCard(cardList[selected], trump, breakTrump, -1, cardList)){
+    else if (!checkValidCard(cardList[selected], trump, breakTrump, firstCard, cardList)){
       // eslint-disable-next-line no-restricted-globals
       confirm("This card is not legal to play!")
       return -1
@@ -194,23 +204,27 @@ function MainComponent() {
           prev.splice(selected, 1)
           setNumCards((prev) =>{ return prev-1})
           updateSelected(-1)
-          return [...prev]
+          return [...prev]  
         }
         return prev        
       })
 
-      const addMessageAndUpdate = (message:string, token:string, currPlayer:number, state:roomStatePublic, 
-        breakTrump:boolean, partnerRevealed:boolean) => {
+      const addMessageAndUpdate = (currPlayer:number, state:roomStatePublic, breakTrump:boolean, partnerRevealed:boolean, 
+        message?:string, token?:string) => {
         setPlayerDataWith(state)
         setCurrBidderPlayerWith((currPlayer)%4)
-        addMessage(message, token)
-        setBreakTrump(() => {
-          return breakTrump
+        setBreakTrump((prev) => {
+          return (prev || breakTrump)
         })
-        setPartnerRevealed(partnerRevealed)
+        setPartnerRevealed((prev) => {
+          return (prev || partnerRevealed)
+        })
+        if(message !== undefined && token !== undefined){
+          addMessage(message, token)
+        }
       }
 
-      socket.emit('playCard', cardRemoved, id, roomCode, addMessageAndUpdate)
+      socket.emit('play-card', cardRemoved, id, roomCode, addMessageAndUpdate)
       
       return cardRemoved
     }
@@ -340,6 +354,16 @@ function MainComponent() {
     socket.on("get-player", (player) => {
       setCurrBidderPlayer(player)
     })
+
+    socket.on("send-card", (player, hasTrump, partnerRevealed) => {
+      setCurrBidderPlayerWith((player)%4)
+      setBreakTrump((prev) => {
+        return (prev || hasTrump)
+      })
+      setPartnerRevealed((prev) => {
+        return (prev || partnerRevealed)
+      })
+    })
   })
 
   const startGame = () => {
@@ -366,7 +390,19 @@ function MainComponent() {
       const message = prevToken[0]
       const token = prevToken[1]
       prev.push([message, token])
-      return [...prev]
+
+      const uniqueMessages:[string,string][] = []
+      for (var i = 0; i < prev.length; ++i){
+        const message = prev[i]
+        if (uniqueMessages.length === 0){
+          uniqueMessages.push(message)
+        }
+        else if (uniqueMessages[uniqueMessages.length-1][1] !== message[1]){
+          uniqueMessages.push(message)
+        }
+      }
+
+      return uniqueMessages
     })
   }, [prevToken])
  
