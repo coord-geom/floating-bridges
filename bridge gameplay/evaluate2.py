@@ -80,7 +80,7 @@ while game_cnt<10000: # game_cnt < NUMGAMES
         move = agents[0].explore(bridge)
 
         if move == [0,0]: bidlist.append(-1)
-        else: bidlist.append(5*move[0]+move[1])
+        else: bidlist.append(5*(move[0]-1)+move[1]-1)
 
         if printing: print(next_player,move)
         
@@ -217,7 +217,7 @@ while game_cnt<10000: # game_cnt < NUMGAMES
         else:
             info['win'] = Bridge.next_starter
 
-        info['desc'] = 'Round ' + str(j+1) + '\nPlayer' + str(info['start']+1) +\
+        info['desc'] = 'Round ' + str(j+1) + '\nPlayer ' + str(info['start']+1) +\
                         ' starts\nPlayer ' + str(info['win']+1) + ' wins' 
 
         play_filter.append(info)
