@@ -31,6 +31,7 @@ function MainComponent() {
   const [sideMessages, setSideMessages] = useState<[string,string][]> (
     []
   ) 
+  const [partnerRevealed, setPartnerRevealed] = useState<boolean> (false)
 
   const [playerData, setPlayerData] = useState<roomStatePublic> (
     {
@@ -38,9 +39,23 @@ function MainComponent() {
       bid: [-1,-1],
       partners: [-1,-1],
       cardsPlayed: Array(4).fill(-1),
-      setsWon: Array(4).fill(0)
+      setsWon: Array(4).fill(0),
+      cardsRemaining: Array(4).fill(13)
     }
   )
+  
+  const resetPlayerDataToDefault = () => {
+    setPlayerData((prev) => {
+      return {
+        roomState: 0,
+        bid: [-1,-1],
+        partners: [-1,-1],
+        cardsPlayed: Array(4).fill(-1),
+        setsWon: Array(4).fill(0),
+        cardsRemaining: Array(4).fill(13)
+      }
+    })
+  }
 
   const setPlayerDataWith = (playerData:roomStatePublic) => {
     setPlayerData((prev) => {
@@ -118,7 +133,7 @@ function MainComponent() {
 
   const [breakTrump, setBreakTrump] = useState<boolean> (false)
 
-  const trump = playerData.bid[0]
+  const trump = playerData.bid[1]
   
   const handleClickCard = (index:number) => {
     updateSelected(index)
@@ -183,16 +198,29 @@ function MainComponent() {
         }
         return prev        
       })
+
+      const addMessageAndUpdate = (message:string, token:string, currPlayer:number, state:roomStatePublic, 
+        breakTrump:boolean, partnerRevealed:boolean) => {
+        setPlayerDataWith(state)
+        setCurrBidderPlayerWith((currPlayer)%4)
+        addMessage(message, token)
+        setBreakTrump(() => {
+          return breakTrump
+        })
+        setPartnerRevealed(partnerRevealed)
+      }
+
+      socket.emit('playCard', cardRemoved, id, roomCode, addMessageAndUpdate)
       
       return cardRemoved
     }
   }
 
-  const [currBidder, setCurrBidder] = useState<number> (
+  const [currBidderPlayer, setCurrBidderPlayer] = useState<number> (
     -1
   ) //change to false later
-  const setCurrBidderWith = (id: number) => {
-    setCurrBidder((prev) => {
+  const setCurrBidderPlayerWith = (id: number) => {
+    setCurrBidderPlayer((prev) => {
       return id
     })
   }
@@ -303,20 +331,20 @@ function MainComponent() {
   
     socket.on("send-cards", (cards) => {
       console.log(cards)
-      setCurrBidder(0)
+      setCurrBidderPlayer(0)
       setCardList((prev) => {
         return cards
       })
     })
 
-    socket.on("get-bid", (player) => {
-      setCurrBidder(player)
+    socket.on("get-player", (player) => {
+      setCurrBidderPlayer(player)
     })
   })
 
   const startGame = () => {
     const setData = (roomState:roomStatePublic, cards:number[]) => {
-      setCurrBidder(0)
+      setCurrBidderPlayer(0)
       console.log(roomState)
       console.log(cards)
       setCardList((prev) => {
@@ -368,10 +396,11 @@ function MainComponent() {
   }
   else {
     return <AppRoom roomCode={roomCode} name={name} id={id} sideMessages={sideMessages}
-    addMessage={addMessage} leaveRoom={exitRoom} playerData={playerData} cardLst={cardList} 
+    addMessage={addMessage} leaveRoom={exitRoom} playerData={playerData} 
     updateCardLst={updateCardLst} bgNum={bgNum} startGame={startGame} cardList={cardList} selLst={selLst} 
-    handleClickCard={handleClickCard} handleClickSubmit={handleClickSubmit} trump={trump} currBidder={currBidder}
-    setPlayerDataWith={setPlayerDataWith} setCurrBidderWith={setCurrBidderWith}/>
+    handleClickCard={handleClickCard} handleClickSubmit={handleClickSubmit} trump={trump} currBidderPlayer={currBidderPlayer}
+    setPlayerDataWith={setPlayerDataWith} setCurrBidderPlayerWith={setCurrBidderPlayerWith} breakTrump={breakTrump}
+    partnerRevealed={partnerRevealed}/>
   }
 }
 
