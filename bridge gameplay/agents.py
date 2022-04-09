@@ -85,7 +85,7 @@ class BiddingAgent(Agent):
         if game.last_number > 0:
             id = game.last_suit + (game.last_number-1) * 5
 
-        bids = [[0,0] for _ in range(4)]
+        bids = [[0,0] for _ in range(16)]
         for i in range(4):
             if id+i+1 >= len(BiddingAgent.OUTPUT_MAP): 
                 break
@@ -97,6 +97,7 @@ class BiddingAgent(Agent):
     def load_state(self, checkpoint):
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.trainer.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        self.model.eval()
 
 class CallingAgent(Agent):
     OUTPUT_MAP = [
@@ -150,6 +151,7 @@ class CallingAgent(Agent):
     def load_state(self, checkpoint):
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.trainer.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        self.model.eval()
 
 
 class PlayingAgent(Agent):
@@ -227,3 +229,4 @@ class PlayingAgent(Agent):
     def load_state(self, checkpoint):
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.trainer.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        self.model.eval()

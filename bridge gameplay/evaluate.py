@@ -6,8 +6,9 @@ agents      = [BiddingAgent(), CallingAgent(), PlayingAgent()]
 bridges     = [Bridge(i) for i in range(4)]
 
 for i in range(3):
-    checkpoint = torch.load('model/AprilFoolsModel_Agent'+str(i)+'.pth')
+    checkpoint = torch.load('model/AprilFoolsModel_Agent'+str(i)+'.pt')
     agents[i].load_state(checkpoint)
+    agents[i].epsilon = 0.01
 
 bids = {}
 tot = {}
@@ -29,7 +30,7 @@ bidder_win_cnt = 0
 
 printing = False
 
-while game_cnt<10000: # game_cnt < NUMGAMES
+while game_cnt<100: # game_cnt < NUMGAMES
 
     next_player = game_cnt % 4
     old_player = next_player
@@ -55,12 +56,7 @@ while game_cnt<10000: # game_cnt < NUMGAMES
 
         state   = agents[0].get_state(bridge)
 
-        move = None
-        if repeat_cnt == 1:
-            repeat_cnt = 0
-            move = agents[0].explore(bridge)
-        else:
-            move = agents[0].get_action(state, bridge)
+        move = agents[0].get_action(state, bridge)
 
         if printing: print(next_player,move)
         
@@ -101,12 +97,7 @@ while game_cnt<10000: # game_cnt < NUMGAMES
 
         state   = agents[1].get_state(bridge)
         
-        move = None
-        if repeat_cnt == 1:
-            repeat_cnt = 0
-            move = agents[1].explore(bridge)
-        else:
-            move = agents[1].get_action(state, bridge)
+        move = agents[1].get_action(state, bridge)
 
         reward, done, next_player = bridge.play_step(move)
 
@@ -139,12 +130,7 @@ while game_cnt<10000: # game_cnt < NUMGAMES
 
         state   = agents[2].get_state(bridge)
         
-        move = None
-        if repeat_cnt == 1:
-            repeat_cnt = 0
-            move = agents[2].explore(bridge)
-        else:
-            move = agents[2].get_action(state, bridge)
+        move = agents[2].get_action(state, bridge)
 
         if printing: 
             if Bridge.bidder_num == next_player:
@@ -164,7 +150,7 @@ while game_cnt<10000: # game_cnt < NUMGAMES
 
     game_cnt += 1
     tot[(Bridge.bid_number,Bridge.bid_suit)] += 1
-    #print('Game',game_cnt)
+    print('Game',game_cnt)
     #print('Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
     if Bridge.bidder_sets >= 6 + Bridge.bid_number:
         #print('Win Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
@@ -176,8 +162,8 @@ while game_cnt<10000: # game_cnt < NUMGAMES
         #print('Lose Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
         pass
 
-    if game_cnt%100 == 0:
-        print(game_cnt/100,'% done')
+    if game_cnt%10 == 0:
+        print(game_cnt/1,'% done')
 
     bridges = [Bridge(i) for i in range(4)]
     bid_states = [None,None,None,None]

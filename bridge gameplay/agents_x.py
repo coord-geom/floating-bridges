@@ -77,7 +77,7 @@ class BiddingAgent(Agent):
             if game.last_number == 0: move = torch.argmax(x).item()
             else:
                 a = game.last_number
-                b = game.last_bid
+                b = game.last_suit
                 move = torch.argmax(torch.cat(x[0:1],x[(a-1)*5+b:-1]))
             if self.epsilon > self.eps_min: self.epsilon -= self.eps_dec
             return BiddingAgent.OUTPUT_MAP[move]
@@ -100,7 +100,7 @@ class BiddingAgent(Agent):
         return bids[random.randrange(len(bids))]
     
     def load_model(self, filepath):
-        self.model.load(filepath)
+        self.model = torch.load(filepath)
         self.model.eval()
 
 class PlayingAgent(Agent):
@@ -181,5 +181,5 @@ class PlayingAgent(Agent):
         return valid[random.randrange(len(valid))]
 
     def load_model(self, filepath):
-        self.model.load(filepath)
+        self.model = torch.load(filepath)
         self.model.eval()

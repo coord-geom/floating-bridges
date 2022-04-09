@@ -15,7 +15,7 @@ tot = {}
 games = []
 
 for i in range(2):
-    checkpoint = torch.load('model/ExtendedLastChance_Agent'+str(i)+'.pth')
+    checkpoint = torch.load('model/ExtendedLastChance_Agent'+str(i)+'.pt')
     agents[i].load_state(checkpoint)
     agents[i].epsilon = 0.01
 
@@ -42,7 +42,7 @@ printing = False
 
 game_10k_sim = []
 
-while game_cnt<10000: # game_cnt < NUMGAMES
+while game_cnt<100: # game_cnt < NUMGAMES
 
     next_player = game_cnt % 4
     old_player = next_player
@@ -73,11 +73,11 @@ while game_cnt<10000: # game_cnt < NUMGAMES
 
         state = agents[0].get_state(bridge)
 
-        #move = agents[0].get_action(state, bridge)
+        move = agents[0].get_action(state, bridge)
         #if repeat_cnt == 2: 
         #    move = agents[0].explore(bridge)
         #    repeat_cnt = 0
-        move = agents[0].explore(bridge)
+        #move = agents[0].explore(bridge)
 
         if move == [0,0]: bidlist.append(-1)
         else: bidlist.append(5*(move[0]-1)+move[1]-1)
@@ -172,7 +172,7 @@ while game_cnt<10000: # game_cnt < NUMGAMES
 
         state   = agents[1].get_state(bridge)
         
-        #move = agents[1].get_action(state, bridge)
+        move = agents[1].get_action(state, bridge)
         #if repeat_cnt == 2: 
         #    move = agents[1].explore(bridge)
         #    repeat_cnt = 0
@@ -202,6 +202,7 @@ while game_cnt<10000: # game_cnt < NUMGAMES
     #print('Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
 
 
+    '''    
     for j in range(13):
         c_order = [None,None,None,None]
         info = {}
@@ -223,32 +224,33 @@ while game_cnt<10000: # game_cnt < NUMGAMES
         play_filter.append(info)
 
     winners = []
+    '''
 
     if Bridge.bidder_sets >= 6 + Bridge.bid_number:
         #print('Win Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
         if printing: print(Bridge.bidder_sets,'Bidder win')
         bidder_win_cnt += 1
         bids[(Bridge.bid_number,Bridge.bid_suit)] += 1
-        for i in range(4):
-            if Bridge.bidder_lst[i] == 1: winners.append(i)
+        #for i in range(4):
+        #    if Bridge.bidder_lst[i] == 1: winners.append(i)
     else:
         if printing: print(Bridge.bidder_sets,'Bidder lose')
         #print('Lose Number:',Bridge.bid_number,', Suit:',Bridge.bid_suit)
-        for i in range(4):
-            if Bridge.bidder_lst[i] == 0: winners.append(i)
+        #for i in range(4):
+        #    if Bridge.bidder_lst[i] == 0: winners.append(i)
 
 
-    roundInfo = {'bids':bidlist,'partner':partner,'plays':play_filter,'winners':winners}
+    #roundInfo = {'bids':bidlist,'partner':partner,'plays':play_filter,'winners':winners}
     #print(roundInfo)  
     #game_data = bridge.write_to_json()
     #games.append(game_data)
 
-    game_10k_sim.append(roundInfo)
+    #game_10k_sim.append(roundInfo)
         
     
 
-    if game_cnt%1000 == 0:
-        print(game_cnt/100,'% done')
+    if game_cnt%10 == 0:
+        print(game_cnt/1,'% done')
 
     bridges = [Bridge(i) for i in range(4)]
 
@@ -257,15 +259,14 @@ while game_cnt<10000: # game_cnt < NUMGAMES
     call_state = []
     play_states = [None,None,None,None]
 
-#print('bidder win rate:',bidder_win_cnt/game_cnt)
-#print(bids)
-#print(tot)
-
+print('bidder win rate:',bidder_win_cnt/game_cnt)
+print(bids)
+print(tot)
+'''
 g_d = {'games':game_10k_sim}
 with open('model/game10k.json','w',encoding='utf-8') as f:
     json.dump(g_d,f,ensure_ascii=False,indent=4)
 
-'''
 for i in range(1,8):
     suit_bids = []
     for j in range(1,6):

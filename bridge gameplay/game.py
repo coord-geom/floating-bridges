@@ -1,9 +1,6 @@
 import random
-import json
-import copy
 
-ILLEGAL_PENALTY = -1234567890
-
+ILLEGAL_PENALTY = -1234567890 # A heavy negative score to discourage illegal moves
 
 class Bridge:
 
@@ -128,6 +125,7 @@ class Bridge:
             suit_counts[t[0]-1] += 1
 
         return suit_counts
+
     # Executes the action at the current phase
     def play_step(self, action=None): 
 
@@ -374,40 +372,31 @@ class Bridge:
             Bridge.plays_lst.append(play)
             Bridge.past_cards = []
 
+
+    # This function gives the rewards to the models for their actions to train them
     def get_rewards(self):
 
         side = Bridge.bidder_lst[self.player_num]
 
-        bid_win = [20,34,57,96.25,168+2/3,325,819] # net zero sum
+        bid_win = [20,34,57,96.25,168+2/3,325,819] 
         non_bid_win = [13,55/6,6,3.5,5/3,0.5,0]
-            
-        if Bridge.bidder_sets >= 6 + Bridge.bid_number: # bidder win
+        
+        # If the bidder side has won
+        if Bridge.bidder_sets >= 6 + Bridge.bid_number:
             if side == 1:
-                return bid_win[Bridge.bid_number-1] # bidder side win
+                # Reward the bidding team a flat rate regardless of number of sets won
+                return bid_win[Bridge.bid_number-1] 
             else: 
-                return -Bridge.against_sets**2 # against side lose
-        else: # against win
-            if side == 0: 
-                return non_bid_win[Bridge.bid_number-1] # against side win
-            else: 
-                return -(6+Bridge.bid_number-Bridge.bidder_sets)**2 # bidder side lose
-
-    def write_to_json(self):
-        partner_card_to_int = 13 * (Bridge.partner_card[0] - 1) + Bridge.partner_card[1] - 1
-        partner_num = 4
-        for i in range(0,4):
-            if Bridge.bidder_lst[i] == 1 & i != Bridge.bidder_num:
-                partner_num = i
-        winners = []
-        if Bridge.bidder_lst[Bridge.next_starter] == 1:
-            for i in range(0,4):
-                if Bridge.bidder_lst[i] == 1:
-                    winners.append(i)
+                # Penalise the non-bidding team by a quadratic scaling since they might have
+                # possibly pushed the bid up to win
+                return -Bridge.against_sets**2
+        
+        # If the non-bidder side has won 
         else:
-            for i in range(0,4):
-                if Bridge.bidder_lst[i] == 0:
-                    winners.append(i)
-        data = {'bids': Bridge.bids_lst, 'partner': {'card': partner_card_to_int, 'id': partner_num}, 'plays': Bridge.plays_lst, 'winners': winners}
-        # with open('game_data.json', 'w', encoding='utf-8') as f:
-        #     json.dump(data, f, ensure_ascii=False, indent=4)
-        return data
+            if side == 0: 
+                # Reward the non-bidding team a flat rate regardless of number of sets won
+                return non_bid_win[Bridge.bid_number-1]
+            else:
+                # Penalise the bidding team by a quadratic scaling by how much they overbid
+                return -(6+Bridge.bid_number-Bridge.bidder_sets)**2
+
