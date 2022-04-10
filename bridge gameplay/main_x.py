@@ -164,5 +164,5 @@ while (time.time()-true_start < TIMERUN):
     play_states = [None,None,None,None]
 
 
-torch.save(agents[0].model,'model/6Apr12am_BidModel')
-torch.save(agents[1].model,'model/6Apr12am_PlayModel')
+torch.save(agents[0].model,'model/6Apr12am_BidModel.pt')
+torch.save(agents[1].model,'model/6Apr12am_PlayModel.pt')

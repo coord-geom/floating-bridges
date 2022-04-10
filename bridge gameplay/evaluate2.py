@@ -15,7 +15,7 @@ tot = {}
 games = []
 
 for i in range(2):
-    checkpoint = torch.load('model/ExtendedLastChance_Agent'+str(i)+'.pt')
+    checkpoint = torch.load('ExtendedLastChance_Agent'+str(i)+'.pt')
     agents[i].load_state(checkpoint)
     agents[i].epsilon = 0.01
 
